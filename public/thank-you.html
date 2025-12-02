@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You for Registering!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .card { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px -5px rgba(0, 0, 0, 0.04); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-xl bg-white p-8 card rounded-xl text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h1 class="text-3xl font-bold mt-4 text-gray-800">Registration Complete!</h1>
+        <p class="text-gray-600 mt-2 mb-6">We are verifying your payment status.</p>
+
+        <div id="status-message" class="p-4 rounded-lg bg-yellow-100 text-yellow-800 mb-4">
+            Checking payment status...
+        </div>
+
+        <div id="success-content" class="hidden">
+            <p class="text-lg font-medium text-gray-700 mb-4">You're all set! Click the link below to join the community.</p>
+            <a id="whatsapp-link" href="#" target="_blank" class="inline-flex items-center justify-center py-3 px-6 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 transition duration-150 ease-in-out">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="h-5 w-5 mr-2 fill-white"><path d="M380.9 97.1C339.4 55.4 283.8 32 225.5 32c-122.9 0-222 99.8-222 223 0 39.1 10.3 77.2 30.2 110.8L0 480l113.1-29.6c31.1 17.5 66.8 26.6 102.4 26.6h.1c122.9 0 222-99.8 222-223 0-57.5-22.3-112.4-62.7-152.9zm-92.3 277.5L254 340.5c-4-2-7.8-3.7-11.4-5.3-7.5-3.3-14.8-6.6-21.7-9.4l-14.4-6.2c-5.4-2.3-10.7-5-15.6-7.8-10.3-6.2-19.6-13.8-27.9-22.3-1.6-1.6-3.2-3.1-4.7-4.7-16-16-29.7-34.1-40.4-54.6-5.8-11.2-10-23.1-12.7-35.4-2-9.4 2-20.4 11-25.2 6-3.2 12.3-5.2 18.7-6.5l.3-.1c5.2-1 10.4-1.5 15.6-1.5 8.3 0 16.5 1.7 24.3 5l.1.1c11.3 5.4 22 13 31.8 22.8 1.5 1.5 3 3 4.5 4.5 14.8 15.3 26.9 33.7 35.7 54.7 2.2 5.3 4 10.8 5.4 16.4 1.3 5.7 2 11.5 2 17.4 0 5.9-.6 11.6-1.8 17.2-2.3 10.5-5.3 21-9.2 30.9-1.9 4.7-4.3 9.2-6.9 13.5z"/></svg>
+                Join WhatsApp Group
+            </a>
+        </div>
+        
+        <div id="failure-content" class="hidden">
+            <p class="text-lg font-medium text-gray-700 mb-4">Your payment could not be confirmed at this time. Please check your email for confirmation or contact support.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import SUPABASE_URL from utils.js (assuming you deploy utils.js alongside this)
+        import { SUPABASE_URL } from './js/utils.js'; 
+
+        async function verifyPayment() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const reference = urlParams.get('reference');
+            
+            const statusMessageEl = document.getElementById('status-message');
+            const successContentEl = document.getElementById('success-content');
+            const failureContentEl = document.getElementById('failure-content');
+            const whatsappLinkEl = document.getElementById('whatsapp-link');
+
+            if (!reference) {
+                statusMessageEl.textContent = 'Error: Missing payment reference in URL.';
+                statusMessageEl.className = 'p-4 rounded-lg bg-red-100 text-red-800 mb-4';
+                return;
+            }
+
+            try {
+                // Call the new verification Edge Function
+                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/verify-payment`;
+                
+                const response = await fetch(edgeFunctionUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reference })
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok || !result.is_paid) {
+                    // Payment is not 'paid' in the database (e.g., still 'unpaid', failure, or webhook delay)
+                    statusMessageEl.textContent = 'Payment confirmation pending or failed. Please check back in a few minutes or contact support.';
+                    statusMessageEl.className = 'p-4 rounded-lg bg-yellow-100 text-yellow-800 mb-4';
+                    failureContentEl.classList.remove('hidden');
+                    return;
+                }
+                
+                // Success
+                statusMessageEl.textContent = 'Payment successfully verified!';
+                statusMessageEl.className = 'p-4 rounded-lg bg-green-100 text-green-800 mb-4';
+                successContentEl.classList.remove('hidden');
+
+                // IMPORTANT: Replace with your actual WhatsApp Group link
+                whatsappLinkEl.href = "https://chat.whatsapp.com/L1nkToYourGroup"; 
+
+            } catch (error) {
+                console.error('Verification Error:', error);
+                statusMessageEl.textContent = 'An unexpected error occurred during verification. Please contact support.';
+                statusMessageEl.className = 'p-4 rounded-lg bg-red-100 text-red-800 mb-4';
+                failureContentEl.classList.remove('hidden');
+            }
+        }
+
+        verifyPayment();
+    </script>
+</body>
+</html>
