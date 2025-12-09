@@ -1,14 +1,14 @@
 
 
-// Initialize Supabase Client
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
 
 // --- Configuration ---
 // IMPORTANT: Replace with your actual Supabase URL and Anon Key
 const SUPABASE_URL = 'https://nugxkqclzusgibyqemou.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z3hrcWNsenVzZ2lieXFlbW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2NjA4MTgsImV4cCI6MjA4MDIzNjgxOH0.j9bvd-zyTqNg2aGhpwmuzeHZaZl4xzSOSsD0TRp79Xc';
 
-
+// Initialize Supabase Client
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'; // Use esm.sh for a reliable ES Module CDN
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const auth = supabase.auth;
@@ -42,3 +42,4 @@ async function signOut() {
 
 
 export { supabase, auth, requireAuth, showMessage, signOut, SUPABASE_URL };
+
