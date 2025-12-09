@@ -3,36 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login</title>
-    <!-- CSP FIX: Consolidated and corrected policy string -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src https://fonts.gstatic.com; connect-src 'self' https://nugxkqclzusgibyqemou.supabase.co https://api.paystack.co;">
+    <title>Admin Login / Sign Up</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src https://fonts.gstatic.com; connect-src 'self' https://nugxkqclzusgibyqemou.supabase.co https://api.paystack.co;">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
         .card { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px -5px rgba(0, 0, 0, 0.04); }
+        .tab-active { border-color: #3b82f6; color: #3b82f6; font-weight: 600; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-md bg-white p-8 card rounded-xl">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Admin Login</h1>
+        <div class="flex border-b mb-6">
+            <button id="login-tab" class="flex-1 py-2 text-center border-b-2 tab-active" onclick="showTab('login')">Log In</button>
+            <button id="signup-tab" class="flex-1 py-2 text-center border-b-2 border-transparent" onclick="showTab('signup')">Sign Up</button>
+        </div>
 
         <form id="login-form" class="space-y-6">
+            <h1 class="text-xl font-bold text-center text-gray-800">Admin Login</h1>
+            
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                <input type="email" id="email" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border">
+                <label for="login-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" id="login-email" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border">
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border">
+                <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="login-password" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border">
             </div>
 
-            <div id="message-area" class="text-sm font-medium hidden p-3 rounded-lg bg-red-100 text-red-600"></div>
+            <div id="login-message-area" class="text-sm font-medium hidden p-3 rounded-lg bg-red-100 text-red-600"></div>
 
             <button type="submit" id="login-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
                 Log In
+            </button>
+        </form>
+        
+        <form id="signup-form" class="space-y-6 hidden">
+            <h1 class="text-xl font-bold text-center text-gray-800">New Account</h1>
+
+            <div>
+                <label for="signup-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" id="signup-email" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border">
+            </div>
+
+            <div>
+                <label for="signup-password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="signup-password" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border">
+            </div>
+
+            <div id="signup-message-area" class="text-sm font-medium hidden p-3 rounded-lg bg-red-100 text-red-600"></div>
+
+            <button type="submit" id="signup-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                Create Account
             </button>
         </form>
     </div>
@@ -40,25 +65,48 @@
     <script type="module">
         import { auth, showMessage } from './js/utils.js';
 
-        const formEl = document.getElementById('login-form');
+        // --- DOM ELEMENTS ---
+        const loginFormEl = document.getElementById('login-form');
+        const signupFormEl = document.getElementById('signup-form');
         const loginBtn = document.getElementById('login-button');
-        const messageArea = document.getElementById('message-area');
+        const signupBtn = document.getElementById('signup-button');
+        const loginTab = document.getElementById('login-tab');
+        const signupTab = document.getElementById('signup-tab');
+        
+        // --- TAB LOGIC ---
+        window.showTab = function(tabName) {
+            if (tabName === 'login') {
+                loginFormEl.classList.remove('hidden');
+                signupFormEl.classList.add('hidden');
+                loginTab.classList.add('tab-active');
+                signupTab.classList.remove('tab-active');
+                document.getElementById('login-message-area').classList.add('hidden');
+            } else {
+                loginFormEl.classList.add('hidden');
+                signupFormEl.classList.remove('hidden');
+                signupTab.classList.add('tab-active');
+                loginTab.classList.remove('tab-active');
+                document.getElementById('signup-message-area').classList.add('hidden');
+            }
+        }
 
-        // Check if user is already logged in
+        // --- CHECK AUTH STATUS ---
         auth.getUser().then(({ data: { user } }) => {
             if (user) {
                 window.location.href = '/admin.html';
             }
         });
 
-        formEl.addEventListener('submit', async (e) => {
+        // --- LOGIN HANDLER ---
+        loginFormEl.addEventListener('submit', async (e) => {
             e.preventDefault();
             loginBtn.disabled = true;
             loginBtn.textContent = 'Logging in...';
+            const messageArea = document.getElementById('login-message-area');
             messageArea.classList.add('hidden');
 
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
 
             try {
                 const { error } = await auth.signInWithPassword({ email, password });
@@ -67,14 +115,49 @@
                     throw new Error(error.message);
                 }
 
-                // Redirect on success
                 window.location.href = '/admin.html';
 
             } catch (error) {
                 console.error('Login Error:', error);
-                showMessage('message-area', error.message, true);
+                showMessage('login-message-area', error.message, true);
                 loginBtn.textContent = 'Log In';
                 loginBtn.disabled = false;
+            }
+        });
+        
+        // --- SIGN UP HANDLER ---
+        signupFormEl.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Creating Account...';
+            const messageArea = document.getElementById('signup-message-area');
+            messageArea.classList.add('hidden');
+
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            
+            try {
+                // Supabase sign-up creates a user and triggers the 'handle_new_user' SQL function
+                const { error } = await auth.signUp({ email, password });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+                
+                // Supabase default is email confirmation, inform the user
+                showMessage('signup-message-area', 'Success! Check your email to confirm your account before logging in.', false);
+                
+                // Clear inputs
+                document.getElementById('signup-email').value = '';
+                document.getElementById('signup-password').value = '';
+
+            } catch (error) {
+                console.error('Sign Up Error:', error);
+                showMessage('signup-message-area', error.message, true);
+                
+            } finally {
+                signupBtn.textContent = 'Create Account';
+                signupBtn.disabled = false;
             }
         });
     </script>
