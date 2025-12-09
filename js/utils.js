@@ -1,11 +1,14 @@
+
+
+// Initialize Supabase Client
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
 // --- Configuration ---
 // IMPORTANT: Replace with your actual Supabase URL and Anon Key
 const SUPABASE_URL = 'https://nugxkqclzusgibyqemou.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z3hrcWNsenVzZ2lieXFlbW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2NjA4MTgsImV4cCI6MjA4MDIzNjgxOH0.j9bvd-zyTqNg2aGhpwmuzeHZaZl4xzSOSsD0TRp79Xc';
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z3hrcWNsenVzZ2lieXFlbW91Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDY2MDgxOCwiZXhwIjoyMDgwMjM2ODE4fQ.UM3aVSWiZQABSClEKlkDnlpaOGTxoG-46_Y_MdWc7QM'; // Only used in Edge Functions, but defining here for clarity
 
-// Initialize Supabase Client
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const auth = supabase.auth;
@@ -36,5 +39,6 @@ async function signOut() {
     await auth.signOut();
     window.location.href = '/admin-login.html';
 }
+
 
 export { supabase, auth, requireAuth, showMessage, signOut, SUPABASE_URL };
