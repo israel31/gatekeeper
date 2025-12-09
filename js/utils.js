@@ -5,7 +5,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z3hrcWNsenVzZ2lieXFlbW91Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDY2MDgxOCwiZXhwIjoyMDgwMjM2ODE4fQ.UM3aVSWiZQABSClEKlkDnlpaOGTxoG-46_Y_MdWc7QM'; // Only used in Edge Functions, but defining here for clarity
 
 // Initialize Supabase Client
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'; // Use esm.sh for a reliable ES Module CDN
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const auth = supabase.auth;
@@ -36,5 +36,6 @@ async function signOut() {
     await auth.signOut();
     window.location.href = '/admin-login.html';
 }
+
 
 export { supabase, auth, requireAuth, showMessage, signOut, SUPABASE_URL };
