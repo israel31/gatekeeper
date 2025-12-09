@@ -39,7 +39,7 @@
 
     <script type="module">
         // Import SUPABASE_URL from utils.js
-        import { SUPABASE_URL } from './js/utils.js'; 
+        import { auth, showMessage } from '/js/utils.js';
 
         async function verifyPayment() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -102,4 +102,5 @@
         verifyPayment();
     </script>
 </body>
+
 </html>
