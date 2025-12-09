@@ -49,7 +49,7 @@
     </div>
 
     <script type="module">
-        import { supabase, showMessage, SUPABASE_URL } from './js/utils.js';
+        import { supabase, showMessage, SUPABASE_URL } from '/js/utils.js';
 
         const urlParams = new URLSearchParams(window.location.search);
         const SLUG = urlParams.get('slug'); // NEW: Get slug from URL
@@ -225,4 +225,5 @@
         fetchFormConfig();
     </script>
 </body>
+
 </html>
