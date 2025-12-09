@@ -21,7 +21,7 @@
         <p class="text-gray-600 mt-2 mb-6">We are verifying your payment status.</p>
 
         <div id="status-message" class="p-4 rounded-lg bg-yellow-100 text-yellow-800 mb-4">
-            Checking payment status...
+            Checking registration status...
         </div>
 
         <div id="success-content" class="hidden">
@@ -33,12 +33,12 @@
         </div>
         
         <div id="failure-content" class="hidden">
-            <p class="text-lg font-medium text-gray-700 mb-4">Your payment could not be confirmed at this time. Please check your email for confirmation or contact support.</p>
+            <p class="text-lg font-medium text-gray-700 mb-4">Your registration/payment could not be confirmed at this time. Please check your email for confirmation or contact support.</p>
         </div>
     </div>
 
     <script type="module">
-        // Import SUPABASE_URL from utils.js (assuming you deploy utils.js alongside this)
+        // Import SUPABASE_URL from utils.js
         import { SUPABASE_URL } from './js/utils.js'; 
 
         async function verifyPayment() {
@@ -51,13 +51,14 @@
             const whatsappLinkEl = document.getElementById('whatsapp-link');
 
             if (!reference) {
-                statusMessageEl.textContent = 'Error: Missing payment reference in URL.';
+                statusMessageEl.textContent = 'Error: Missing registration reference in URL.';
                 statusMessageEl.className = 'p-4 rounded-lg bg-red-100 text-red-800 mb-4';
+                failureContentEl.classList.remove('hidden');
                 return;
             }
 
             try {
-                // Call the new verification Edge Function
+                // Call the verification Edge Function using the imported SUPABASE_URL
                 const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/verify-payment`;
                 
                 const response = await fetch(edgeFunctionUrl, {
@@ -69,20 +70,26 @@
                 const result = await response.json();
 
                 if (!response.ok || !result.is_paid) {
-                    // Payment is not 'paid' in the database (e.g., still 'unpaid', failure, or webhook delay)
-                    statusMessageEl.textContent = 'Payment confirmation pending or failed. Please check back in a few minutes or contact support.';
+                    // Status is 'unpaid', 'failed', or verification failed.
+                    statusMessageEl.textContent = 'Registration confirmation pending or failed. If you paid, please check back in a few minutes or contact support.';
                     statusMessageEl.className = 'p-4 rounded-lg bg-yellow-100 text-yellow-800 mb-4';
                     failureContentEl.classList.remove('hidden');
                     return;
                 }
                 
-                // Success
-                statusMessageEl.textContent = 'Payment successfully verified!';
+                // Success (is_paid is true, whether paid via Paystack or registered for free)
+                statusMessageEl.textContent = 'Registration successfully confirmed!';
                 statusMessageEl.className = 'p-4 rounded-lg bg-green-100 text-green-800 mb-4';
                 successContentEl.classList.remove('hidden');
 
-                // IMPORTANT: Replace with your actual WhatsApp Group link
-                whatsappLinkEl.href = "https://chat.whatsapp.com/L1nkToYourGroup"; 
+                // NEW: Use the dynamic link returned by the Edge Function
+                const dynamicLink = result.success_redirect_url;
+                if (dynamicLink) {
+                   whatsappLinkEl.href = dynamicLink;
+                } else {
+                   // Fallback for safety, though the Edge Function should handle it
+                   whatsappLinkEl.href = "https://chat.whatsapp.com/L1nkToYourGroup"; 
+                }
 
             } catch (error) {
                 console.error('Verification Error:', error);

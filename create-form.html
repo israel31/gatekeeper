@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .card { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px -5px rgba(0, 0, 0, 0.04); }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <header class="bg-white shadow sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-900">Form Management</h1>
+            <a href="/admin.html" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded-lg text-sm transition">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="bg-white card rounded-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6" id="form-action-title">Create New Registration Form</h2>
+            <div id="message-area" class="text-sm font-medium hidden p-3 rounded-lg mb-4"></div>
+
+            <form id="form-creator" class="space-y-8">
+                
+                <div class="space-y-4 border-b pb-6">
+                    <h3 class="text-xl font-semibold text-gray-700">1. Basic Setup</h3>
+
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700">Form Title *</label>
+                        <input type="text" id="title" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border" placeholder="Example: 2026 Cohort Registration">
+                    </div>
+
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="description" rows="2" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border" placeholder="Brief details about this registration."></textarea>
+                    </div>
+
+                    <div>
+                        <label for="slug" class="block text-sm font-medium text-gray-700">Unique Link Slug *</label>
+                        <input type="text" id="slug" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border" placeholder="e.g., your-cohort-2026">
+                        <p class="mt-1 text-xs text-gray-500">Public URL will be: /f/<span id="slug-preview">your-cohort-2026</span></p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 border-b pb-6">
+                    <h3 class="text-xl font-semibold text-gray-700">2. Payment & Redirect</h3>
+                    
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="requires_payment" checked class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <label for="requires_payment" class="text-sm font-medium text-gray-700">Require Payment?</label>
+                    </div>
+
+                    <div id="payment-fields" class="space-y-4 pl-6 border-l">
+                        <div>
+                            <label for="price" class="block text-sm font-medium text-gray-700">Registration Price (in Naira: ₦) *</label>
+                            <input type="number" id="price" required min="100" value="5000" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border" placeholder="Enter amount in Naira (e.g., 5000)">
+                            <p class="mt-1 text-xs text-gray-500">Note: Paystack requires amounts in kobo (e.g., 5000 Naira = 500,000 kobo)</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="whatsapp_link" class="block text-sm font-medium text-gray-700">Success Redirect URL (e.g., WhatsApp Group) *</label>
+                        <input type="url" id="whatsapp_link" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border" placeholder="https://chat.whatsapp.com/L1nkToYourCustomGroup">
+                        <p class="mt-1 text-xs text-gray-500">Where users go after successful registration/payment.</p>
+                    </div>
+
+                </div>
+
+                <div class="space-y-4 border-b pb-6">
+                    <h3 class="text-xl font-semibold text-gray-700">3. Custom Fields</h3>
+                    <div id="field-list" class="space-y-3">
+                        </div>
+                    <button type="button" id="add-field-btn" class="py-2 px-4 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition text-sm">
+                        + Add Custom Input Field
+                    </button>
+                </div>
+                
+                <button type="submit" id="save-form-btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                    Create Form
+                </button>
+            </form>
+        </div>
+    </main>
+    
+    <script type="module">
+        import { supabase, requireAuth, showMessage } from './js/utils.js';
+
+        // --- DOM Elements ---
+        const formCreator = document.getElementById('form-creator');
+        const slugInput = document.getElementById('slug');
+        const slugPreview = document.getElementById('slug-preview');
+        const requiresPaymentCheckbox = document.getElementById('requires_payment');
+        const paymentFields = document.getElementById('payment-fields');
+        const fieldList = document.getElementById('field-list');
+        const addFieldBtn = document.getElementById('add-field-btn');
+        const saveFormBtn = document.getElementById('save-form-btn');
+
+        // --- State ---
+        let user = null;
+        let fieldCounter = 0; // Used for unique ID generation for new fields
+
+        // --- Utility Functions ---
+        
+        // Dynamic Field Template
+        function createFieldItem(fieldKey = `custom_${++fieldCounter}`, fieldLabel = '', fieldType = 'text', isRequired = true) {
+            const fieldItem = document.createElement('div');
+            fieldItem.classList.add('flex', 'space-x-4', 'items-center', 'p-3', 'bg-gray-50', 'rounded-lg');
+            fieldItem.dataset.key = fieldKey; // Store key on the container for easy retrieval
+
+            fieldItem.innerHTML = `
+                <input type="text" class="flex-1 p-2 border rounded-lg text-sm" placeholder="Field Label (e.g., Your Instagram Handle)" value="${fieldLabel}" required data-field-prop="label">
+                
+                <input type="text" class="w-32 p-2 border rounded-lg text-sm bg-gray-200" value="${fieldKey}" readonly data-field-prop="key" title="Internal Key (e.g. instagram_handle)">
+
+                <select class="w-24 p-2 border rounded-lg text-sm" data-field-prop="type">
+                    <option value="text" ${fieldType === 'text' ? 'selected' : ''}>Text</option>
+                    <option value="email" ${fieldType === 'email' ? 'selected' : ''}>Email</option>
+                    <option value="number" ${fieldType === 'number' ? 'selected' : ''}>Number</option>
+                </select>
+                
+                <div class="flex items-center space-x-2 w-20">
+                    <input type="checkbox" ${isRequired ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300" data-field-prop="required">
+                    <label class="text-xs text-gray-600">Required</label>
+                </div>
+
+                <button type="button" class="text-red-500 hover:text-red-700 transition" onclick="this.closest('.flex').remove()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 7a1 1 0 012 0v8a1 1 0 11-2 0V7zm4 0a1 1 0 10-2 0v8a1 1 0 102 0V7z" clip-rule="evenodd" /></svg>
+                </button>
+            `;
+            fieldList.appendChild(fieldItem);
+            return fieldItem;
+        }
+        
+        function gatherFormData() {
+            // 1. Basic Form Data
+            const formData = {
+                title: document.getElementById('title').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                slug: slugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'), // Sanitize slug
+                whatsapp_link: document.getElementById('whatsapp_link').value.trim(),
+                user_id: user.id, // Mandatory for RLS
+                is_open: true, // New forms are open by default
+            };
+            
+            // 2. Payment Data
+            formData.requires_payment = requiresPaymentCheckbox.checked;
+            if (formData.requires_payment) {
+                // Paystack expects kobo, convert Naira amount * 100
+                const priceNaira = parseFloat(document.getElementById('price').value);
+                formData.price = Math.round(priceNaira * 100); 
+                if (formData.price < 100) throw new Error("Price must be at least ₦1 for payment.");
+            } else {
+                formData.price = 0;
+            }
+            
+            // 3. Dynamic Fields Data
+            const customFields = [];
+            let order = 0;
+            fieldList.querySelectorAll('[data-key]').forEach(fieldItem => {
+                const key = fieldItem.dataset.key;
+                const label = fieldItem.querySelector('[data-field-prop="label"]').value.trim();
+                const type = fieldItem.querySelector('[data-field-prop="type"]').value;
+                const required = fieldItem.querySelector('[data-field-prop="required"]').checked;
+
+                if (!label) throw new Error("All custom fields must have a label.");
+
+                customFields.push({
+                    field_key: key,
+                    field_label: label,
+                    field_type: type,
+                    is_required: required,
+                    field_order: order++
+                });
+            });
+            
+            return { formData, customFields };
+        }
+
+        // --- Event Listeners ---
+        
+        // Add Dynamic Field
+        addFieldBtn.addEventListener('click', () => {
+            createFieldItem();
+        });
+
+        // Toggle Payment Fields Visibility
+        requiresPaymentCheckbox.addEventListener('change', () => {
+            if (requiresPaymentCheckbox.checked) {
+                paymentFields.classList.remove('hidden');
+            } else {
+                paymentFields.classList.add('hidden');
+            }
+        });
+        
+        // Update Slug Preview (basic sanitization)
+        slugInput.addEventListener('input', () => {
+             const sanitizedSlug = slugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+             slugPreview.textContent = sanitizedSlug || '...';
+        });
+
+        // Form Submission Handler
+        formCreator.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            saveFormBtn.disabled = true;
+            saveFormBtn.textContent = 'Saving Form...';
+
+            let data;
+            try {
+                data = gatherFormData();
+            } catch (error) {
+                showMessage('message-area', error.message, true);
+                saveFormBtn.textContent = 'Create Form';
+                saveFormBtn.disabled = false;
+                return;
+            }
+            
+            try {
+                // 1. Insert New Form
+                const { data: formResult, error: formError } = await supabase
+                    .from('forms')
+                    .insert(data.formData)
+                    .select('id, slug')
+                    .single();
+
+                if (formError) throw new Error(formError.message || 'Failed to save form configuration.');
+                
+                const newFormId = formResult.id;
+                
+                // 2. Insert Dynamic Fields (batch insert)
+                if (data.customFields.length > 0) {
+                    const fieldsToInsert = data.customFields.map(field => ({
+                        ...field,
+                        form_id: newFormId
+                    }));
+                    
+                    const { error: fieldsError } = await supabase
+                        .from('form_fields')
+                        .insert(fieldsToInsert);
+                        
+                    if (fieldsError) throw new Error(fieldsError.message || 'Failed to save custom fields.');
+                }
+                
+                // 3. Success
+                showMessage('message-area', `Form created successfully! Share this link: /f/${formResult.slug}`, false);
+                
+                // Redirect user to the dashboard to manage the new form
+                setTimeout(() => {
+                    window.location.href = '/admin.html';
+                }, 3000);
+                
+
+            } catch (error) {
+                console.error('Form Creation Error:', error);
+                // NOTE: If field creation fails, the form record is left in the DB. A transaction system would be better here.
+                showMessage('message-area', `Error saving form: ${error.message}`, true);
+                
+            } finally {
+                saveFormBtn.textContent = 'Create Form';
+                saveFormBtn.disabled = false;
+            }
+        });
+
+
+        // --- Initialization ---
+        async function init() {
+            user = await requireAuth();
+            if (!user) return; // requireAuth handles redirection
+
+            // Add one default field to start
+            createFieldItem('phone_number', 'Phone Number', 'text', true);
+        }
+
+        init();
+    </script>
+
+</body>
+</html>

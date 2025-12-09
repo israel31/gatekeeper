@@ -31,7 +31,18 @@
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
             
-            <!-- Global Controls & Status -->
+            <div class="bg-white card rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="flex items-center space-x-4">
+                    <label for="form-selector" class="text-lg font-semibold text-gray-700">Manage Form:</label>
+                    <select id="form-selector" class="p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 w-64">
+                        <option value="">Loading Forms...</option>
+                    </select>
+                </div>
+                <a href="/create-form.html" class="py-2 px-4 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition duration-150 ease-in-out w-full md:w-auto text-center">
+                    + Create New Form
+                </a>
+            </div>
+            
             <div class="bg-white card rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                 
                 <div class="flex items-center space-x-4">
@@ -45,7 +56,6 @@
                 
             </div>
             
-            <!-- Filters and Search -->
             <div class="bg-white card rounded-lg p-4 mb-6 flex flex-col sm:flex-row gap-4">
                 <input type="text" id="search-input" placeholder="Search by name or email..." class="flex-grow p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
                 
@@ -55,7 +65,6 @@
                     <option value="unpaid">Unpaid Only</option>
                 </select>
                 
-                <!-- Export Buttons -->
                 <div class="flex space-x-2">
                     <button id="export-all-btn" class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg text-sm transition flex-shrink-0">Export All CSV</button>
                     <button id="export-paid-btn" class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg text-sm transition flex-shrink-0">Export Paid CSV</button>
@@ -63,7 +72,6 @@
                 </div>
             </div>
 
-            <!-- Entries Table -->
             <div class="overflow-x-auto bg-white card rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -82,7 +90,6 @@
                 <div id="no-entries" class="hidden text-center py-8 text-gray-500">No entries found matching the criteria.</div>
             </div>
             
-            <!-- Pagination -->
             <div class="flex justify-between items-center mt-4 p-4 bg-white card rounded-lg">
                 <button id="prev-page" class="py-2 px-4 bg-gray-200 rounded-lg text-gray-700 font-medium disabled:opacity-50" disabled>Previous</button>
                 <span id="page-info" class="text-gray-600">Page 1 of 1</span>
@@ -110,12 +117,13 @@
         const exportPaidBtn = document.getElementById('export-paid-btn');
         const exportUnpaidBtn = document.getElementById('export-unpaid-btn');
         const noEntriesEl = document.getElementById('no-entries');
+        const formSelector = document.getElementById('form-selector'); // NEW
 
         // --- State ---
         const ENTRIES_PER_PAGE = 10;
         let currentPage = 0;
         let totalCount = 0;
-        let FORM_ID = null;
+        let FORM_ID = null; // Set dynamically by form selector
         let IS_OPEN = null;
         let user = null;
 
@@ -166,7 +174,11 @@
         // --- Data Fetching & Real-Time Listeners ---
 
         async function fetchEntries() {
-            if (!FORM_ID) return;
+            if (!FORM_ID) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">Select a form to view entries.</td></tr>';
+                noEntriesEl.classList.add('hidden');
+                return;
+            }
 
             const offset = currentPage * ENTRIES_PER_PAGE;
             const filter = filterStatus.value;
@@ -176,6 +188,7 @@
                 .from('entries')
                 .select('*', { count: 'exact' }) // Request exact count for pagination
                 .order('created_at', { ascending: false })
+                .eq('form_id', FORM_ID) // IMPORTANT: Filter entries by the selected FORM_ID
                 .range(offset, offset + ENTRIES_PER_PAGE - 1);
 
             // Apply filters
@@ -205,27 +218,50 @@
             updatePaginationControls();
         }
 
-        async function fetchFormConfig() {
+        async function fetchUserForms() {
+            // RLS ensures only the user's forms are returned
             const { data, error } = await supabase
                 .from('forms')
-                .select('id, is_open')
-                .limit(1)
-                .single();
+                .select('id, title, is_open, slug')
+                .order('created_at', { ascending: false });
 
-            if (error || !data) {
-                console.error('Error fetching form config:', error);
-                toggleBtn.disabled = true;
-                statusText.textContent = 'Configuration Error';
-                statusIcon.classList.remove('bg-gray-400');
-                statusIcon.classList.add('bg-red-500');
+            formSelector.innerHTML = ''; // Clear the "Loading Forms" option
+
+            if (error || !data || data.length === 0) {
+                console.error('Error fetching user forms:', error);
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = data && data.length === 0 ? 'No Forms Found' : 'Error Loading Forms';
+                formSelector.appendChild(option);
+                
+                // Disable controls if no forms
+                toggleBtn.disabled = true; 
+                exportAllBtn.disabled = true;
+                exportPaidBtn.disabled = true;
+                exportUnpaidBtn.disabled = true;
+                statusText.textContent = 'No Forms Available';
+                statusIcon.className = 'h-6 w-6 rounded-full bg-gray-400';
                 return;
             }
 
-            FORM_ID = data.id;
-            console.log("Fetched FORM_ID:", FORM_ID);
-            IS_OPEN = data.is_open;
-            updatePortalStatusUI();
+            data.forEach(form => {
+                const option = document.createElement('option');
+                option.value = form.id;
+                option.textContent = `${form.title} (${form.slug})`;
+                option.dataset.isOpen = form.is_open;
+                formSelector.appendChild(option);
+            });
+            
+            // Set the first form as the active one
+            FORM_ID = data[0].id;
+            IS_OPEN = data[0].is_open;
+            
+            // Re-enable controls and fetch data for the first form
             toggleBtn.disabled = false;
+            exportAllBtn.disabled = false;
+            exportPaidBtn.disabled = false;
+            exportUnpaidBtn.disabled = false;
+            updatePortalStatusUI();
         }
 
         function updatePortalStatusUI() {
@@ -277,6 +313,13 @@
                 
                 const result = await response.json();
                 IS_OPEN = result.is_open;
+                
+                // Update the dropdown option's dataset to reflect the new state immediately
+                const selectedOption = formSelector.options[formSelector.selectedIndex];
+                if (selectedOption) {
+                    selectedOption.dataset.isOpen = IS_OPEN;
+                }
+                
                 updatePortalStatusUI();
                 showMessage('message-area', `Portal successfully set to ${IS_OPEN ? 'OPEN' : 'CLOSED'}.`);
 
@@ -305,7 +348,7 @@
 
                 // Call Edge Function for CSV generation
                 const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/export-csv`;
-                const response = await fetch(edgeFunctionUrl, {
+                const response = await fetch(edgeFunctionFunctionUrl, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -353,8 +396,20 @@
 
         // 4. Logout
         logoutBtn.addEventListener('click', signOut);
+        
+        // 5. Form Selection Change
+        formSelector.addEventListener('change', () => {
+            const selectedOption = formSelector.options[formSelector.selectedIndex];
+            if (selectedOption.value) {
+                FORM_ID = selectedOption.value;
+                IS_OPEN = selectedOption.dataset.isOpen === 'true'; // Get state from option data attribute
+                currentPage = 0; // Reset pagination
+                updatePortalStatusUI();
+                fetchEntries();
+            }
+        });
 
-        // 5. Real-time updates (Optional, but highly recommended for Admin)
+        // 6. Real-time updates (Optional, but highly recommended for Admin)
         function subscribeToRealtime() {
             // Listen for changes in the 'entries' table (e.g., payment status updates)
             supabase.channel('public:entries')
@@ -374,10 +429,10 @@
 
             authStatusEl.textContent = `Logged in as: ${user.email}`;
 
-            // Fetch initial configuration (includes FORM_ID)
-            await fetchFormConfig();
+            // Fetch user's forms and set FORM_ID/IS_OPEN based on the first form
+            await fetchUserForms(); 
 
-            // Fetch initial data
+            // Fetch initial data (will run only if FORM_ID is set by fetchUserForms)
             await fetchEntries();
 
             // Setup real-time listener
@@ -387,5 +442,4 @@
         init();
     </script>
 </body>
-
 </html>

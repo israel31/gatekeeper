@@ -1,0 +1,2 @@
+# Maps clean URL /f/my-form-slug to the actual file /form-viewer.html?slug=my-form-slug
+/f/:slug /form-viewer.html?slug=:slug 200
