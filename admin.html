@@ -150,7 +150,7 @@
         const noEntriesEl = document.getElementById('no-entries');
         const formSelector = document.getElementById('form-selector');
         
-        // NEW ANALYTICS ELEMENTS
+        // ANALYTICS ELEMENTS
         const publicLinkDisplay = document.getElementById('public-link-display');
         const copyLinkBtn = document.getElementById('copy-link-btn');
         const statTotalEntries = document.getElementById('stat-total-entries');
@@ -163,9 +163,11 @@
         let totalCount = 0;
         let FORM_ID = null; 
         let IS_OPEN = null;
-        let FORM_PRICE = 0; // NEW: Store the price for earnings calculation
-        let FORM_SLUG = null; // NEW: Store the slug for link display
+        let FORM_PRICE = 0; 
+        let FORM_SLUG = null; 
         let user = null;
+
+        // --- Utility Functions ---
 
         // Helper to format currency (assuming NGN based on Paystack)
         const formatCurrency = (kobo) => {
@@ -174,9 +176,52 @@
             return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(naira);
         };
 
+        // Simple JSON formatting for display
+        const formatAnswers = (jsonString) => {
+            try {
+                const answers = JSON.parse(jsonString);
+                return Object.entries(answers).map(([key, value]) => 
+                    `<div class="text-xs text-gray-500">${key}: ${value}</div>`
+                ).join('');
+            } catch (e) {
+                return '<span class="text-xs text-red-400">Invalid JSON</span>';
+            }
+        };
+
+        const renderTable = (entries) => {
+            tableBody.innerHTML = '';
+            noEntriesEl.classList.add('hidden');
+
+            if (entries.length === 0) {
+                noEntriesEl.classList.remove('hidden');
+                return;
+            }
+
+            entries.forEach(entry => {
+                const statusClass = entry.payment_status === 'paid' ? 'status-paid' : 'status-unpaid';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${entry.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.email}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass} paid-status capitalize">${entry.payment_status}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${formatAnswers(entry.answers)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(entry.created_at).toLocaleDateString()}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        };
+        
+        const updatePaginationControls = () => {
+            const totalPages = Math.ceil(totalCount / ENTRIES_PER_PAGE);
+            pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages || 1}`;
+            prevBtn.disabled = currentPage === 0;
+            nextBtn.disabled = currentPage >= totalPages - 1;
+        };
+
+
         // --- Data Fetching & Real-Time Listeners ---
         
-        // NEW: Fetch and display form analytics
+        // Fetch and display form analytics
         async function fetchFormAnalytics() {
             if (!FORM_ID) return;
 
@@ -207,7 +252,7 @@
             }
 
             // Calculate Earnings (using the stored price in kobo)
-            const totalEarnings = paidCount * FORM_PRICE;
+            const totalEarnings = (paidCount || 0) * FORM_PRICE;
 
             // Update UI
             statTotalEntries.textContent = totalCount || 0;
@@ -262,21 +307,26 @@
         }
 
         async function fetchUserForms() {
+            // RLS ensures only the user's forms are returned
             const { data, error } = await supabase
                 .from('forms')
-                .select('id, title, is_open, slug, price') // NEW: Select 'price'
+                .select('id, title, is_open, slug, price') 
                 .order('created_at', { ascending: false });
 
             formSelector.innerHTML = ''; 
 
             if (error || !data || data.length === 0) {
-                // ... Error handling remains the same ...
                 console.error('Error fetching user forms:', error);
                 const option = document.createElement('option');
                 option.value = '';
                 option.textContent = data && data.length === 0 ? 'No Forms Found' : 'Error Loading Forms';
                 formSelector.appendChild(option);
+                
+                // Disable controls if no forms
                 toggleBtn.disabled = true; 
+                exportAllBtn.disabled = true;
+                exportPaidBtn.disabled = true;
+                exportUnpaidBtn.disabled = true;
                 statusText.textContent = 'No Forms Available';
                 statusIcon.className = 'h-6 w-6 rounded-full bg-gray-400';
                 copyLinkBtn.disabled = true;
@@ -288,8 +338,8 @@
                 option.value = form.id;
                 option.textContent = `${form.title} (${form.slug})`;
                 option.dataset.isOpen = form.is_open;
-                option.dataset.slug = form.slug; // Store slug
-                option.dataset.price = form.price; // Store price
+                option.dataset.slug = form.slug; 
+                option.dataset.price = form.price; 
                 formSelector.appendChild(option);
             });
             
@@ -301,6 +351,9 @@
             
             // Enable controls and fetch data for the first form
             toggleBtn.disabled = false;
+            exportAllBtn.disabled = false;
+            exportPaidBtn.disabled = false;
+            exportUnpaidBtn.disabled = false;
             copyLinkBtn.disabled = false;
             updatePortalStatusUI();
         }
@@ -321,9 +374,10 @@
                 toggleBtn.classList.add('bg-green-600', 'hover:bg-green-700');
             }
             
-            // NEW: Update Public Link Display
+            // Update Public Link Display
             if (FORM_SLUG) {
-                const publicUrl = `${window.location.origin}/f/${FORM_SLUG}`;
+                // IMPORTANT: Use /f/ for the public URL, matching Netlify rewrite
+                const publicUrl = `${window.location.origin}/f/${FORM_SLUG}`; 
                 publicLinkDisplay.textContent = publicUrl;
                 publicLinkDisplay.title = publicUrl;
             } else {
@@ -334,7 +388,117 @@
 
         // --- Event Handlers ---
         
-        // NEW: Copy Link Functionality
+        // 1. Portal Toggle
+        toggleBtn.addEventListener('click', async () => {
+            if (!FORM_ID) return;
+            toggleBtn.disabled = true;
+            
+            const action = IS_OPEN ? 'close' : 'open';
+            toggleBtn.textContent = `${action === 'close' ? 'Closing' : 'Opening'}...`;
+            
+            try {
+                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/toggle-form`;
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (!session) throw new Error("User session expired. Please log out and back in.");
+
+                const response = await fetch(edgeFunctionUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}` 
+                    },
+                    body: JSON.stringify({ form_id: FORM_ID, is_open: !IS_OPEN })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to toggle portal.');
+                }
+                
+                const result = await response.json();
+                IS_OPEN = result.is_open;
+                
+                const selectedOption = formSelector.options[formSelector.selectedIndex];
+                if (selectedOption) {
+                    selectedOption.dataset.isOpen = IS_OPEN;
+                }
+                
+                updatePortalStatusUI();
+                showMessage('message-area', `Portal successfully set to ${IS_OPEN ? 'OPEN' : 'CLOSED'}.`);
+
+            } catch (error) {
+                console.error('Toggle Error:', error);
+                showMessage('message-area', `Toggle failed: ${error.message}`, true);
+            } finally {
+                toggleBtn.disabled = false;
+                updatePortalStatusUI(); 
+            }
+        });
+
+        // 2. Export CSV
+        const handleExport = async (type) => {
+            if (!FORM_ID) return;
+            
+            const btn = document.getElementById(`export-${type}-btn`);
+            const originalText = btn.textContent;
+            btn.textContent = `Exporting ${type}...`;
+            btn.disabled = true;
+
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (!session) throw new Error("Authentication required for export.");
+
+                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/export-csv`;
+                const response = await fetch(edgeFunctionUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}` 
+                    },
+                    body: JSON.stringify({ form_id: FORM_ID, type })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'CSV export failed.');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `entries_${type}_${new Date().toISOString().slice(0,10)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showMessage('message-area', `${type.toUpperCase()} entries downloaded successfully.`);
+
+            } catch (error) {
+                console.error('Export Error:', error);
+                showMessage('message-area', `Export failed: ${error.message}`, true);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        exportAllBtn.addEventListener('click', () => handleExport('all'));
+        exportPaidBtn.addEventListener('click', () => handleExport('paid'));
+        exportUnpaidBtn.addEventListener('click', () => handleExport('unpaid'));
+
+        // 3. Navigation and Filtering
+        prevBtn.addEventListener('click', () => { if (currentPage > 0) { currentPage--; fetchEntries(); } });
+        nextBtn.addEventListener('click', () => { currentPage++; fetchEntries(); });
+        filterStatus.addEventListener('change', () => { currentPage = 0; fetchEntries(); });
+        searchInput.addEventListener('input', () => { currentPage = 0; fetchEntries(); });
+
+        // 4. Logout
+        logoutBtn.addEventListener('click', signOut);
+
+        // 5. Copy Link Functionality
         copyLinkBtn.addEventListener('click', async () => {
             const link = publicLinkDisplay.textContent;
             try {
@@ -345,29 +509,27 @@
                 showMessage('message-area', 'Error: Could not copy link.', true);
             }
         });
-
-        // 5. Form Selection Change
+        
+        // 6. Form Selection Change
         formSelector.addEventListener('change', () => {
             const selectedOption = formSelector.options[formSelector.selectedIndex];
             if (selectedOption.value) {
                 FORM_ID = selectedOption.value;
                 IS_OPEN = selectedOption.dataset.isOpen === 'true'; 
-                FORM_SLUG = selectedOption.dataset.slug; // Update slug
-                FORM_PRICE = parseInt(selectedOption.dataset.price); // Update price
+                FORM_SLUG = selectedOption.dataset.slug; 
+                FORM_PRICE = parseInt(selectedOption.dataset.price); 
                 currentPage = 0; 
                 updatePortalStatusUI();
-                fetchEntries();
+                fetchEntries(); // This also calls fetchFormAnalytics
             }
         });
-        
-        // ... (Other event handlers like toggleBtn, export buttons, etc. remain the same) ...
 
-        // 6. Real-time updates (fetchFormAnalytics added here)
+        // 7. Real-time updates 
         function subscribeToRealtime() {
             supabase.channel('public:entries')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, (payload) => {
                     console.log('Real-time update received:', payload);
-                    fetchEntries(); // Refreshes entries and analytics
+                    fetchEntries(); 
                 })
                 .subscribe();
         }
@@ -381,7 +543,6 @@
 
             await fetchUserForms(); 
 
-            // fetchEntries calls fetchFormAnalytics
             await fetchEntries();
 
             subscribeToRealtime();
