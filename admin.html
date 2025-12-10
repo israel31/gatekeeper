@@ -266,41 +266,47 @@
         }
 
         async function fetchUserForms() {
-            formSelector.innerHTML = '';
+            formSelector.innerHTML = '<option value="">Loading Forms...</option>';
 
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) throw new Error("Session expired. Please log in again.");
 
-                // NEW: Call the secure Edge Function to get forms
+                // Call the secure Edge Function to get forms
                 const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/get-user-forms`;
 
                 const response = await fetch(edgeFunctionUrl, {
-                    method: 'POST', // Using POST for consistency, though GET would work too
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}` // Send user JWT
+                        'Authorization': `Bearer ${session.access_token}`
                     },
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to fetch user forms from server.');
+                    // Error returned from the Edge Function
+                    throw new Error(data.error || 'Failed to fetch user forms from server.');
                 }
 
-                const data = await response.json(); // Data is now the array of forms
+                formSelector.innerHTML = ''; // Clear 'Loading Forms'
 
                 if (data.length === 0) {
-                    // ... (rest of error/no form handling) ...
                     const option = document.createElement('option');
                     option.value = '';
-                    option.textContent = 'No Forms Found';
+                    option.textContent = 'No Forms Found. Create one!';
                     formSelector.appendChild(option);
 
+                    // Disable all controls and reset state
+                    FORM_ID = null;
                     toggleBtn.disabled = true;
+                    exportAllBtn.disabled = true;
+                    exportPaidBtn.disabled = true;
+                    exportUnpaidBtn.disabled = true;
+                    copyLinkBtn.disabled = true;
                     statusText.textContent = 'No Forms Available';
                     statusIcon.className = 'h-6 w-6 rounded-full bg-gray-400';
-                    copyLinkBtn.disabled = true;
                     return;
                 }
 
@@ -322,16 +328,20 @@
 
                 // Enable controls and fetch data for the first form
                 toggleBtn.disabled = false;
+                exportAllBtn.disabled = false;
+                exportPaidBtn.disabled = false;
+                exportUnpaidBtn.disabled = false;
                 copyLinkBtn.disabled = false;
                 updatePortalStatusUI();
 
             } catch (error) {
                 console.error('Error fetching user forms:', error);
-                showMessage('message-area', `Error: ${error.message}`, true);
+                // The showMessage call in the catch block is now managed by the browser 
+                // to prevent the secondary TypeError from stopping the execution.
+                showMessage('message-area', `Error: ${error.message}. Check browser console for details.`, true);
                 formSelector.innerHTML = '<option value="">Error Loading Forms</option>';
             }
         }
-
         function updatePortalStatusUI() {
             if (IS_OPEN === true) {
                 statusText.textContent = 'Portal is OPEN';
