@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payout Setup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .card { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px -5px rgba(0, 0, 0, 0.04); }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <header class="bg-white shadow sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-900">Payout Setup</h1>
+            <a href="/admin.html" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded-lg text-sm transition">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="bg-white card rounded-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Creator Payout Configuration</h2>
+            <p class="text-gray-600 mb-6">Enter your bank details to receive payments from successful registrations.</p>
+            
+            <div id="message-area" class="text-sm font-medium hidden p-3 rounded-lg mb-4"></div>
+
+            <form id="payout-form" class="space-y-6">
+
+                <div>
+                    <label for="bank_code" class="block text-sm font-medium text-gray-700">Bank Name *</label>
+                    <select id="bank_code" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border">
+                        <option value="">-- Loading Banks... --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="account_number" class="block text-sm font-medium text-gray-700">Account Number *</label>
+                    <input type="text" id="account_number" required pattern="\d{10}" maxlength="10" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border" placeholder="10-digit account number">
+                </div>
+                
+                <div id="account-name-verification" class="mt-4 p-3 border border-dashed rounded-lg bg-yellow-50 text-yellow-800 hidden">
+                    Verifying account name...
+                </div>
+                
+                <div id="verification-result" class="mt-2 text-sm font-semibold hidden"></div>
+
+                <button type="submit" id="save-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                    Save Payout Details
+                </button>
+            </form>
+            
+            <div id="status-card" class="mt-8 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-lg hidden">
+                <p class="font-bold text-blue-800">Current Payout Status</p>
+                <p class="text-sm text-blue-700 mt-1" id="current-status-text"></p>
+            </div>
+            
+        </div>
+    </main>
+    
+    <script type="module">
+        import { supabase, requireAuth, showMessage, SUPABASE_URL } from './js/utils.js';
+
+        // --- DOM Elements ---
+        const formEl = document.getElementById('payout-form');
+        const bankSelect = document.getElementById('bank_code');
+        const accountInput = document.getElementById('account_number');
+        const saveBtn = document.getElementById('save-button');
+        const messageArea = document.getElementById('message-area');
+        const verificationEl = document.getElementById('account-name-verification');
+        const resultEl = document.getElementById('verification-result');
+        const statusCard = document.getElementById('status-card');
+        const statusText = document.getElementById('current-status-text');
+
+        let user = null;
+        let banksList = [];
+
+        // --- Data Fetching & Verification ---
+        
+        // 1. Fetch Current Payout Status
+        async function fetchCurrentStatus() {
+            if (!user) return;
+            const { data, error } = await supabase
+                .from('users')
+                .select('paystack_subaccount_code, bank_account_number, bank_code')
+                .eq('id', user.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 means 'no row found' (new user)
+                console.error("Error fetching status:", error);
+                statusText.textContent = 'Error loading current status.';
+                statusCard.classList.remove('hidden');
+                return;
+            }
+            
+            if (data && data.paystack_subaccount_code) {
+                const bankName = banksList.find(b => b.code === data.bank_code)?.name || 'Unknown Bank';
+                statusText.innerHTML = `✅ **Payouts Active.** <br>Subaccount: <code>${data.paystack_subaccount_code}</code><br>Bank: ${bankName}, Account: ${data.bank_account_number}.`;
+                statusCard.classList.remove('hidden');
+            } else {
+                statusText.textContent = '⚠️ Payouts are NOT setup. Complete the form below to activate fee splitting.';
+                statusCard.classList.remove('hidden');
+            }
+        }
+        
+        // 2. Resolve Account Number (Called on change after a small delay)
+        let resolveTimeout;
+        const debouncedResolve = () => {
+            clearTimeout(resolveTimeout);
+            resultEl.classList.add('hidden');
+            
+            const bankCode = bankSelect.value;
+            const accountNumber = accountInput.value.trim();
+
+            if (bankCode && accountNumber.length === 10) {
+                verificationEl.classList.remove('hidden');
+                verificationEl.textContent = 'Verifying account name...';
+
+                resolveTimeout = setTimeout(async () => {
+                    await resolveAccount(bankCode, accountNumber);
+                }, 1000); 
+            } else {
+                verificationEl.classList.add('hidden');
+            }
+        };
+        
+        bankSelect.addEventListener('change', debouncedResolve);
+        accountInput.addEventListener('input', debouncedResolve);
+
+        async function resolveAccount(bankCode, accountNumber) {
+            try {
+                // Call the secure Edge Function to resolve the account name (using the same logic as create-subaccount.ts)
+                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/create-subaccount`;
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                // We send a GET request to a hypothetical 'resolve-account' endpoint.
+                // Since we only have 'create-subaccount', we'll rely on the server-side
+                // verification logic during the save process for the most secure flow.
+
+                // For immediate UI feedback, we just confirm details are ready for saving.
+                verificationEl.classList.add('hidden');
+                resultEl.textContent = `Account ready for saving. Final name verification happens on SAVE.`; 
+                resultEl.classList.add('text-gray-600');
+                resultEl.classList.remove('hidden', 'text-red-600', 'text-green-600');
+
+            } catch (error) {
+                verificationEl.classList.add('hidden');
+                resultEl.textContent = `Verification Failed: ${error.message}`;
+                resultEl.classList.add('text-red-600');
+                resultEl.classList.remove('hidden', 'text-green-600');
+            }
+        }
+
+        // --- Form Submission ---
+        formEl.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Processing Payout Setup...';
+            messageArea.classList.add('hidden');
+
+            const bankCode = bankSelect.value;
+            const accountNumber = accountInput.value.trim();
+            const bankName = bankSelect.options[bankSelect.selectedIndex].text;
+
+            try {
+                // 1. Call the secure Edge Function to create the subaccount
+                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/create-subaccount`;
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (!session) throw new Error("User session expired. Please log out and back in.");
+                
+                const response = await fetch(edgeFunctionUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}` 
+                    },
+                    body: JSON.stringify({
+                        bank_code: bankCode,
+                        account_number: accountNumber,
+                        bank_name: bankName,
+                        user_id: user.id 
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to create subaccount.');
+                }
+                
+                // 2. Success
+                showMessage('message-area', `Payout setup successful! Account verified as ${result.account_name}. Subaccount Code: ${result.subaccount_code}`, false);
+                await fetchCurrentStatus(); // Refresh status card
+
+            } catch (error) {
+                console.error('Payout Setup Error:', error);
+                showMessage('message-area', `Setup Failed: ${error.message}`, true);
+                
+            } finally {
+                saveBtn.textContent = 'Save Payout Details';
+                saveBtn.disabled = false;
+            }
+        });
+
+        // --- Dynamic Bank List Implementation ---
+        async function populateBanks() {
+            const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/fetch-banks`;
+            bankSelect.innerHTML = '<option value="">-- Loading Banks... --</option>';
+            
+            try {
+                const response = await fetch(edgeFunctionUrl, { method: 'GET' });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Server failed to return bank list.');
+                }
+                
+                banksList = data; // Store the list globally for fetchCurrentStatus
+                bankSelect.innerHTML = '<option value="">-- Select your Bank --</option>'; // Reset dropdown
+                
+                data.forEach(bank => {
+                    const option = document.createElement('option');
+                    option.value = bank.code;
+                    option.textContent = bank.name;
+                    bankSelect.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error("Failed to fetch banks:", error);
+                bankSelect.innerHTML = '<option value="">-- Error Loading Banks --</option>';
+                showMessage('message-area', `Failed to load banks: ${error.message}`, true);
+            }
+        }
+        
+        async function init() {
+            user = await requireAuth();
+            if (!user) return; 
+            
+            await populateBanks();
+            await fetchCurrentStatus();
+        }
+
+        init();
+    </script>
+</body>
+</html>

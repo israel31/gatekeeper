@@ -32,7 +32,14 @@
         <div class="px-4 py-6 sm:px-0">
             
             <div id="message-area" class="text-sm font-medium hidden p-3 rounded-lg mb-4"></div>
-            
+
+            <div id="payout-alert" class="p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 hidden mb-6" role="alert">
+                <p class="font-bold">Action Required: Payout Setup</p>
+                <p class="text-sm">Paid registration is currently DISABLED. Please set up your bank details to activate payment splitting for your forms.
+                    <a href="/payout-setup.html" class="font-medium underline text-yellow-700 hover:text-yellow-900 ml-2">Go to Payout Settings</a>
+                </p>
+            </div>
+
             <div class="bg-white card rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                 <div class="flex items-center space-x-4">
                     <label for="form-selector" class="text-lg font-semibold text-gray-700">Manage Form:</label>
@@ -40,9 +47,14 @@
                         <option value="">Loading Forms...</option>
                     </select>
                 </div>
-                <a href="/create-form.html" class="py-2 px-4 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition duration-150 ease-in-out w-full md:w-auto text-center">
-                    + Create New Form
-                </a>
+                <div class="flex space-x-4">
+                    <a href="/payout-setup.html" class="py-2 px-4 rounded-lg text-gray-700 font-medium bg-gray-200 hover:bg-gray-300 transition duration-150 ease-in-out w-full md:w-auto text-center">
+                        💳 Payout Settings
+                    </a>
+                    <a href="/create-form.html" class="py-2 px-4 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition duration-150 ease-in-out w-full md:w-auto text-center">
+                        + Create New Form
+                    </a>
+                </div>
             </div>
 
             <div class="bg-gray-800 text-white card rounded-lg p-4 mb-6 flex justify-between items-center">
@@ -156,6 +168,7 @@
         const statTotalEntries = document.getElementById('stat-total-entries');
         const statPaidEntries = document.getElementById('stat-paid-entries');
         const statTotalEarnings = document.getElementById('stat-total-earnings');
+        const payoutAlertEl = document.getElementById('payout-alert'); // NEW LINE
 
         // --- State ---
         const ENTRIES_PER_PAGE = 10;
@@ -166,6 +179,7 @@
         let FORM_PRICE = 0; 
         let FORM_SLUG = null; 
         let user = null;
+        let isPayoutSetup = false; // NEW LINE
 
         // --- Utility Functions ---
 
@@ -565,6 +579,19 @@
             if (!user) return; 
 
             authStatusEl.textContent = `Logged in as: ${user.email}`;
+
+            const { data: payoutData, error: payoutError } = await supabase
+                .from('users')
+                .select('paystack_subaccount_code')
+                .eq('id', user.id)
+                .single();
+            
+            if (payoutData && payoutData.paystack_subaccount_code) {
+                isPayoutSetup = true;
+            } else {
+                console.warn("User payout setup is incomplete.");
+                payoutAlertEl.classList.remove('hidden');
+            }
 
             await fetchUserForms(); 
 
