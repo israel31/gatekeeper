@@ -307,57 +307,82 @@
         }
 
         async function fetchUserForms() {
-            // RLS ensures only the user's forms are returned
-            const { data, error } = await supabase
-                .from('forms')
-                .select('id, title, is_open, slug, price') 
-                .order('created_at', { ascending: false });
+            formSelector.innerHTML = '<option value="">Loading Forms...</option>'; 
 
-            formSelector.innerHTML = ''; 
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) throw new Error("Session expired. Please log in again.");
 
-            if (error || !data || data.length === 0) {
-                console.error('Error fetching user forms:', error);
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = data && data.length === 0 ? 'No Forms Found' : 'Error Loading Forms';
-                formSelector.appendChild(option);
+                // >>>>> CORRECTED: Call the secure Edge Function to get forms <<<<<
+                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/get-user-forms`;
                 
-                // Disable controls if no forms
-                toggleBtn.disabled = true; 
-                exportAllBtn.disabled = true;
-                exportPaidBtn.disabled = true;
-                exportUnpaidBtn.disabled = true;
-                statusText.textContent = 'No Forms Available';
-                statusIcon.className = 'h-6 w-6 rounded-full bg-gray-400';
-                copyLinkBtn.disabled = true;
-                return;
+                const response = await fetch(edgeFunctionUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}` 
+                    },
+                });
+                
+                const data = await response.json(); 
+
+                if (!response.ok) {
+                    // Error returned from the Edge Function
+                    throw new Error(data.error || 'Failed to fetch user forms from server.');
+                }
+
+                formSelector.innerHTML = ''; // Clear 'Loading Forms'
+
+                if (data.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No Forms Found. Create one!';
+                    formSelector.appendChild(option);
+                    
+                    // Disable all controls and reset state
+                    FORM_ID = null;
+                    toggleBtn.disabled = true; 
+                    exportAllBtn.disabled = true;
+                    exportPaidBtn.disabled = true;
+                    exportUnpaidBtn.disabled = true;
+                    copyLinkBtn.disabled = true;
+                    statusText.textContent = 'No Forms Available';
+                    statusIcon.className = 'h-6 w-6 rounded-full bg-gray-400';
+                    return;
+                }
+
+                data.forEach(form => {
+                    const option = document.createElement('option');
+                    option.value = form.id;
+                    // Note: 'user_id' is fetched by the edge function but not strictly needed here
+                    option.textContent = `${form.title} (${form.slug})`; 
+                    option.dataset.isOpen = form.is_open;
+                    option.dataset.slug = form.slug; 
+                    option.dataset.price = form.price; 
+                    formSelector.appendChild(option);
+                });
+                
+                // Set the first form as the active one
+                FORM_ID = data[0].id;
+                IS_OPEN = data[0].is_open;
+                FORM_SLUG = data[0].slug;
+                FORM_PRICE = parseInt(data[0].price); // Ensure price is an integer
+                
+                // Enable controls and fetch data for the first form
+                toggleBtn.disabled = false;
+                exportAllBtn.disabled = false;
+                exportPaidBtn.disabled = false;
+                exportUnpaidBtn.disabled = false;
+                copyLinkBtn.disabled = false;
+                updatePortalStatusUI();
+
+            } catch (error) {
+                console.error('Error fetching user forms:', error);
+                showMessage('message-area', `Error: ${error.message}. Check browser console for details.`, true);
+                formSelector.innerHTML = '<option value="">Error Loading Forms</option>';
             }
-
-            data.forEach(form => {
-                const option = document.createElement('option');
-                option.value = form.id;
-                option.textContent = `${form.title} (${form.slug})`;
-                option.dataset.isOpen = form.is_open;
-                option.dataset.slug = form.slug; 
-                option.dataset.price = form.price; 
-                formSelector.appendChild(option);
-            });
-            
-            // Set the first form as the active one
-            FORM_ID = data[0].id;
-            IS_OPEN = data[0].is_open;
-            FORM_SLUG = data[0].slug;
-            FORM_PRICE = data[0].price;
-            
-            // Enable controls and fetch data for the first form
-            toggleBtn.disabled = false;
-            exportAllBtn.disabled = false;
-            exportPaidBtn.disabled = false;
-            exportUnpaidBtn.disabled = false;
-            copyLinkBtn.disabled = false;
-            updatePortalStatusUI();
         }
-
+        
         function updatePortalStatusUI() {
             // Update portal status (Open/Closed)
             if (IS_OPEN === true) {
@@ -552,3 +577,4 @@
     </script>
 </body>
 </html>
+
