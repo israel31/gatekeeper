@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,32 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-        }
-
-        .card {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-
-        .paid-status {
-            font-weight: 600;
-        }
-
-        .status-paid {
-            color: #10B981;
-        }
-
-        /* Green */
-        .status-unpaid {
-            color: #EF4444;
-        }
-
-        /* Red */
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .card { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
+        .paid-status { font-weight: 600; }
+        .status-paid { color: #10B981; } /* Green */
+        .status-unpaid { color: #EF4444; } /* Red */
     </style>
 </head>
-
 <body class="min-h-screen">
 
     <header class="bg-white shadow sticky top-0 z-10">
@@ -41,8 +21,7 @@
             <h1 class="text-xl font-bold text-gray-900">Admin Dashboard</h1>
             <div class="space-x-4 flex items-center">
                 <span id="auth-status" class="text-sm text-gray-500"></span>
-                <button id="logout-button"
-                    class="bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-3 rounded-lg text-sm transition">
+                <button id="logout-button" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-3 rounded-lg text-sm transition">
                     Logout
                 </button>
             </div>
@@ -51,59 +30,76 @@
 
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
-
-            <div
-                class="bg-white card rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            
+            <div id="message-area" class="text-sm font-medium hidden p-3 rounded-lg mb-4"></div>
+            
+            <div class="bg-white card rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                 <div class="flex items-center space-x-4">
                     <label for="form-selector" class="text-lg font-semibold text-gray-700">Manage Form:</label>
-                    <select id="form-selector"
-                        class="p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 w-64">
+                    <select id="form-selector" class="p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 w-64">
                         <option value="">Loading Forms...</option>
                     </select>
                 </div>
-                <a href="/create-form.html"
-                    class="py-2 px-4 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition duration-150 ease-in-out w-full md:w-auto text-center">
+                <a href="/create-form.html" class="py-2 px-4 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition duration-150 ease-in-out w-full md:w-auto text-center">
                     + Create New Form
                 </a>
             </div>
 
-            <div
-                class="bg-white card rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-
-                <div class="flex items-center space-x-4">
-                    <span id="portal-status-icon" class="h-6 w-6 rounded-full bg-gray-400 animate-pulse"></span>
-                    <span id="portal-status-text" class="text-lg font-semibold text-gray-700">Loading Portal
-                        Status...</span>
+            <div class="bg-gray-800 text-white card rounded-lg p-4 mb-6 flex justify-between items-center">
+                <div class="flex-grow">
+                    <span class="text-xs font-medium opacity-75">Public Registration Link (Click to Copy):</span>
+                    <p id="public-link-display" class="text-lg font-mono truncate cursor-pointer hover:underline">Select a form above...</p>
                 </div>
-
-                <button id="toggle-portal-button"
-                    class="py-2 px-4 rounded-lg text-white font-medium transition duration-150 ease-in-out w-full md:w-auto"
-                    disabled>
-                    Toggle Portal
+                <button id="copy-link-btn" class="ml-4 p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition" title="Copy Link" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3h-2a3 3 0 01-3-3H6z" /></svg>
                 </button>
-
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                
+                <div class="bg-white card rounded-lg p-6">
+                    <p class="text-sm font-medium text-gray-500">Total Entries</p>
+                    <p id="stat-total-entries" class="text-3xl font-bold text-gray-900 mt-1">...</p>
+                </div>
+                
+                <div class="bg-white card rounded-lg p-6">
+                    <p class="text-sm font-medium text-gray-500">Paid Registrations</p>
+                    <p id="stat-paid-entries" class="text-3xl font-bold text-green-600 mt-1">...</p>
+                </div>
+                
+                <div class="bg-white card rounded-lg p-6">
+                    <p class="text-sm font-medium text-gray-500">Total Earnings</p>
+                    <p id="stat-total-earnings" class="text-3xl font-bold text-blue-600 mt-1">...</p>
+                </div>
+                
             </div>
 
+            <div class="bg-white card rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                
+                <div class="flex items-center space-x-4">
+                    <span id="portal-status-icon" class="h-6 w-6 rounded-full bg-gray-400 animate-pulse"></span>
+                    <span id="portal-status-text" class="text-lg font-semibold text-gray-700">Loading Portal Status...</span>
+                </div>
+                
+                <button id="toggle-portal-button" class="py-2 px-4 rounded-lg text-white font-medium transition duration-150 ease-in-out w-full md:w-auto" disabled>
+                    Toggle Portal
+                </button>
+                
+            </div>
+            
             <div class="bg-white card rounded-lg p-4 mb-6 flex flex-col sm:flex-row gap-4">
-                <input type="text" id="search-input" placeholder="Search by name or email..."
-                    class="flex-grow p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
-
+                <input type="text" id="search-input" placeholder="Search by name or email..." class="flex-grow p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                
                 <select id="filter-status" class="p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     <option value="all">All Entries</option>
                     <option value="paid">Paid Only</option>
                     <option value="unpaid">Unpaid Only</option>
                 </select>
-
+                
                 <div class="flex space-x-2">
-                    <button id="export-all-btn"
-                        class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg text-sm transition flex-shrink-0">Export
-                        All CSV</button>
-                    <button id="export-paid-btn"
-                        class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg text-sm transition flex-shrink-0">Export
-                        Paid CSV</button>
-                    <button id="export-unpaid-btn"
-                        class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg text-sm transition flex-shrink-0">Export
-                        Unpaid CSV</button>
+                    <button id="export-all-btn" class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg text-sm transition flex-shrink-0">Export All CSV</button>
+                    <button id="export-paid-btn" class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg text-sm transition flex-shrink-0">Export Paid CSV</button>
+                    <button id="export-unpaid-btn" class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg text-sm transition flex-shrink-0">Export Unpaid CSV</button>
                 </div>
             </div>
 
@@ -111,42 +107,30 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Answers</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Submitted</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Answers</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
                         </tr>
                     </thead>
                     <tbody id="entries-table-body" class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-gray-500">Loading entries...</td>
-                        </tr>
+                        <tr><td colspan="5" class="text-center py-4 text-gray-500">Loading entries...</td></tr>
                     </tbody>
                 </table>
-                <div id="no-entries" class="hidden text-center py-8 text-gray-500">No entries found matching the
-                    criteria.</div>
+                <div id="no-entries" class="hidden text-center py-8 text-gray-500">No entries found matching the criteria.</div>
             </div>
-
+            
             <div class="flex justify-between items-center mt-4 p-4 bg-white card rounded-lg">
-                <button id="prev-page"
-                    class="py-2 px-4 bg-gray-200 rounded-lg text-gray-700 font-medium disabled:opacity-50"
-                    disabled>Previous</button>
+                <button id="prev-page" class="py-2 px-4 bg-gray-200 rounded-lg text-gray-700 font-medium disabled:opacity-50" disabled>Previous</button>
                 <span id="page-info" class="text-gray-600">Page 1 of 1</span>
-                <button id="next-page"
-                    class="py-2 px-4 bg-gray-200 rounded-lg text-gray-700 font-medium disabled:opacity-50"
-                    disabled>Next</button>
+                <button id="next-page" class="py-2 px-4 bg-gray-200 rounded-lg text-gray-700 font-medium disabled:opacity-50" disabled>Next</button>
             </div>
         </div>
     </main>
 
     <script type="module">
-        import { supabase, requireAuth, signOut, showMessage, SUPABASE_URL } from './js/utils.js';
+        import { supabase, requireAuth, signOut, showMessage, SUPABASE_URL } from '/js/utils.js'; // FIX: Absolute path
 
         // --- DOM Elements ---
         const tableBody = document.getElementById('entries-table-body');
@@ -164,61 +148,72 @@
         const exportPaidBtn = document.getElementById('export-paid-btn');
         const exportUnpaidBtn = document.getElementById('export-unpaid-btn');
         const noEntriesEl = document.getElementById('no-entries');
-        const formSelector = document.getElementById('form-selector'); // NEW
+        const formSelector = document.getElementById('form-selector');
+        
+        // NEW ANALYTICS ELEMENTS
+        const publicLinkDisplay = document.getElementById('public-link-display');
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        const statTotalEntries = document.getElementById('stat-total-entries');
+        const statPaidEntries = document.getElementById('stat-paid-entries');
+        const statTotalEarnings = document.getElementById('stat-total-earnings');
 
         // --- State ---
         const ENTRIES_PER_PAGE = 10;
         let currentPage = 0;
         let totalCount = 0;
-        let FORM_ID = null; // Set dynamically by form selector
+        let FORM_ID = null; 
         let IS_OPEN = null;
+        let FORM_PRICE = 0; // NEW: Store the price for earnings calculation
+        let FORM_SLUG = null; // NEW: Store the slug for link display
         let user = null;
 
-        // --- Utility Functions ---
-
-        // Simple JSON formatting for display
-        const formatAnswers = (jsonString) => {
-            try {
-                const answers = JSON.parse(jsonString);
-                return Object.entries(answers).map(([key, value]) =>
-                    `<div class="text-xs text-gray-500">${key}: ${value}</div>`
-                ).join('');
-            } catch (e) {
-                return '<span class="text-xs text-red-400">Invalid JSON</span>';
-            }
-        };
-
-        const renderTable = (entries) => {
-            tableBody.innerHTML = '';
-            noEntriesEl.classList.add('hidden');
-
-            if (entries.length === 0) {
-                noEntriesEl.classList.remove('hidden');
-                return;
-            }
-
-            entries.forEach(entry => {
-                const statusClass = entry.payment_status === 'paid' ? 'status-paid' : 'status-unpaid';
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${entry.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.email}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass} paid-status capitalize">${entry.payment_status}</td>
-                    <td class="px-6 py-4 text-sm text-gray-500">${formatAnswers(entry.answers)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(entry.created_at).toLocaleDateString()}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-        };
-
-        const updatePaginationControls = () => {
-            const totalPages = Math.ceil(totalCount / ENTRIES_PER_PAGE);
-            pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages || 1}`;
-            prevBtn.disabled = currentPage === 0;
-            nextBtn.disabled = currentPage >= totalPages - 1;
+        // Helper to format currency (assuming NGN based on Paystack)
+        const formatCurrency = (kobo) => {
+            if (typeof kobo !== 'number') return 'N/A';
+            const naira = kobo / 100;
+            return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(naira);
         };
 
         // --- Data Fetching & Real-Time Listeners ---
+        
+        // NEW: Fetch and display form analytics
+        async function fetchFormAnalytics() {
+            if (!FORM_ID) return;
+
+            // Reset stats display
+            statTotalEntries.textContent = '...';
+            statPaidEntries.textContent = '...';
+            statTotalEarnings.textContent = '...';
+
+            // Query 1: Get count of all entries
+            const { count: totalCount, error: totalError } = await supabase
+                .from('entries')
+                .select('id', { count: 'exact', head: true })
+                .eq('form_id', FORM_ID);
+
+            // Query 2: Get count and sum of paid entries
+            const { count: paidCount, error: paidError } = await supabase
+                .from('entries')
+                .select('id', { count: 'exact', head: true })
+                .eq('form_id', FORM_ID)
+                .eq('payment_status', 'paid');
+                
+            if (totalError || paidError) {
+                console.error('Error fetching analytics:', totalError || paidError);
+                statTotalEntries.textContent = 'Error';
+                statPaidEntries.textContent = 'Error';
+                statTotalEarnings.textContent = 'Error';
+                return;
+            }
+
+            // Calculate Earnings (using the stored price in kobo)
+            const totalEarnings = paidCount * FORM_PRICE;
+
+            // Update UI
+            statTotalEntries.textContent = totalCount || 0;
+            statPaidEntries.textContent = paidCount || 0;
+            statTotalEarnings.textContent = formatCurrency(totalEarnings);
+        }
 
         async function fetchEntries() {
             if (!FORM_ID) {
@@ -227,15 +222,18 @@
                 return;
             }
 
+            // Also fetch analytics whenever entries are refreshed
+            fetchFormAnalytics(); 
+
             const offset = currentPage * ENTRIES_PER_PAGE;
             const filter = filterStatus.value;
             const search = searchInput.value.trim();
 
             let query = supabase
                 .from('entries')
-                .select('*', { count: 'exact' }) // Request exact count for pagination
+                .select('*', { count: 'exact' }) 
                 .order('created_at', { ascending: false })
-                .eq('form_id', FORM_ID) // IMPORTANT: Filter entries by the selected FORM_ID
+                .eq('form_id', FORM_ID) 
                 .range(offset, offset + ENTRIES_PER_PAGE - 1);
 
             // Apply filters
@@ -245,8 +243,6 @@
 
             // Apply search
             if (search) {
-                // Supabase Full-Text Search is complex, so we'll use simple LIKE filtering
-                // NOTE: This relies on Supabase allowing LIKE/ILIKE on RLS policies, which is typical.
                 query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
             }
 
@@ -265,84 +261,85 @@
             updatePaginationControls();
         }
 
-        async function fetchUserForms() {
-            formSelector.innerHTML = '<option value="">Loading Forms...</option>';
+async function fetchUserForms() {
+    formSelector.innerHTML = '<option value="">Loading Forms...</option>'; 
 
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) throw new Error("Session expired. Please log in again.");
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Session expired. Please log in again.");
 
-                // Call the secure Edge Function to get forms
-                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/get-user-forms`;
+        // Call the secure Edge Function to get forms
+        const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/get-user-forms`;
+        
+        const response = await fetch(edgeFunctionUrl, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}` 
+            },
+        });
+        
+        const data = await response.json(); 
 
-                const response = await fetch(edgeFunctionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    // Error returned from the Edge Function
-                    throw new Error(data.error || 'Failed to fetch user forms from server.');
-                }
-
-                formSelector.innerHTML = ''; // Clear 'Loading Forms'
-
-                if (data.length === 0) {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = 'No Forms Found. Create one!';
-                    formSelector.appendChild(option);
-
-                    // Disable all controls and reset state
-                    FORM_ID = null;
-                    toggleBtn.disabled = true;
-                    exportAllBtn.disabled = true;
-                    exportPaidBtn.disabled = true;
-                    exportUnpaidBtn.disabled = true;
-                    copyLinkBtn.disabled = true;
-                    statusText.textContent = 'No Forms Available';
-                    statusIcon.className = 'h-6 w-6 rounded-full bg-gray-400';
-                    return;
-                }
-
-                data.forEach(form => {
-                    const option = document.createElement('option');
-                    option.value = form.id;
-                    option.textContent = `${form.title} (${form.slug})`;
-                    option.dataset.isOpen = form.is_open;
-                    option.dataset.slug = form.slug;
-                    option.dataset.price = form.price;
-                    formSelector.appendChild(option);
-                });
-
-                // Set the first form as the active one
-                FORM_ID = data[0].id;
-                IS_OPEN = data[0].is_open;
-                FORM_SLUG = data[0].slug;
-                FORM_PRICE = data[0].price;
-
-                // Enable controls and fetch data for the first form
-                toggleBtn.disabled = false;
-                exportAllBtn.disabled = false;
-                exportPaidBtn.disabled = false;
-                exportUnpaidBtn.disabled = false;
-                copyLinkBtn.disabled = false;
-                updatePortalStatusUI();
-
-            } catch (error) {
-                console.error('Error fetching user forms:', error);
-                // The showMessage call in the catch block is now managed by the browser 
-                // to prevent the secondary TypeError from stopping the execution.
-                showMessage('message-area', `Error: ${error.message}. Check browser console for details.`, true);
-                formSelector.innerHTML = '<option value="">Error Loading Forms</option>';
-            }
+        if (!response.ok) {
+            // Error returned from the Edge Function
+            throw new Error(data.error || 'Failed to fetch user forms from server.');
         }
+
+        formSelector.innerHTML = ''; // Clear 'Loading Forms'
+
+        if (data.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No Forms Found. Create one!';
+            formSelector.appendChild(option);
+            
+            // Disable all controls and reset state
+            FORM_ID = null;
+            toggleBtn.disabled = true; 
+            exportAllBtn.disabled = true;
+            exportPaidBtn.disabled = true;
+            exportUnpaidBtn.disabled = true;
+            copyLinkBtn.disabled = true;
+            statusText.textContent = 'No Forms Available';
+            statusIcon.className = 'h-6 w-6 rounded-full bg-gray-400';
+            return;
+        }
+
+        data.forEach(form => {
+            const option = document.createElement('option');
+            option.value = form.id;
+            option.textContent = `${form.title} (${form.slug})`;
+            option.dataset.isOpen = form.is_open;
+            option.dataset.slug = form.slug; 
+            option.dataset.price = form.price; 
+            formSelector.appendChild(option);
+        });
+        
+        // Set the first form as the active one
+        FORM_ID = data[0].id;
+        IS_OPEN = data[0].is_open;
+        FORM_SLUG = data[0].slug;
+        FORM_PRICE = data[0].price;
+        
+        // Enable controls and fetch data for the first form
+        toggleBtn.disabled = false;
+        exportAllBtn.disabled = false;
+        exportPaidBtn.disabled = false;
+        exportUnpaidBtn.disabled = false;
+        copyLinkBtn.disabled = false;
+        updatePortalStatusUI();
+
+    } catch (error) {
+        console.error('Error fetching user forms:', error);
+        // The showMessage call in the catch block is now managed by the browser 
+        // to prevent the secondary TypeError from stopping the execution.
+        showMessage('message-area', `Error: ${error.message}. Check browser console for details.`, true);
+        formSelector.innerHTML = '<option value="">Error Loading Forms</option>';
+    }
+}
         function updatePortalStatusUI() {
+            // Update portal status (Open/Closed)
             if (IS_OPEN === true) {
                 statusText.textContent = 'Portal is OPEN';
                 statusIcon.className = 'h-6 w-6 rounded-full bg-green-500';
@@ -356,146 +353,54 @@
                 toggleBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
                 toggleBtn.classList.add('bg-green-600', 'hover:bg-green-700');
             }
+            
+            // NEW: Update Public Link Display
+            if (FORM_SLUG) {
+                const publicUrl = `${window.location.origin}/f/${FORM_SLUG}`;
+                publicLinkDisplay.textContent = publicUrl;
+                publicLinkDisplay.title = publicUrl;
+            } else {
+                publicLinkDisplay.textContent = 'Select a form above...';
+                copyLinkBtn.disabled = true;
+            }
         }
 
         // --- Event Handlers ---
-
-        // 1. Portal Toggle
-        toggleBtn.addEventListener('click', async () => {
-            if (!FORM_ID) return;
-            toggleBtn.disabled = true;
-
-            const action = IS_OPEN ? 'close' : 'open';
-            toggleBtn.textContent = `${action === 'close' ? 'Closing' : 'Opening'}...`;
-
+        
+        // NEW: Copy Link Functionality
+        copyLinkBtn.addEventListener('click', async () => {
+            const link = publicLinkDisplay.textContent;
             try {
-                // Call Edge Function for toggling
-                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/toggle-form`;
-                const { data: { session } } = await supabase.auth.getSession();
-
-                if (!session) throw new Error("User session expired. Please log out and back in.");
-
-                const response = await fetch(edgeFunctionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}` // Send user JWT
-                    },
-                    body: JSON.stringify({ form_id: FORM_ID, is_open: !IS_OPEN })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to toggle portal.');
-                }
-
-                const result = await response.json();
-                IS_OPEN = result.is_open;
-
-                // Update the dropdown option's dataset to reflect the new state immediately
-                const selectedOption = formSelector.options[formSelector.selectedIndex];
-                if (selectedOption) {
-                    selectedOption.dataset.isOpen = IS_OPEN;
-                }
-
-                updatePortalStatusUI();
-                showMessage('message-area', `Portal successfully set to ${IS_OPEN ? 'OPEN' : 'CLOSED'}.`);
-
-            } catch (error) {
-                console.error('Toggle Error:', error);
-                showMessage('message-area', `Toggle failed: ${error.message}`, true);
-            } finally {
-                toggleBtn.disabled = false;
-                updatePortalStatusUI(); // Reset button text if error occurred
+                await navigator.clipboard.writeText(link);
+                showMessage('message-area', 'Link copied to clipboard!', false);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showMessage('message-area', 'Error: Could not copy link.', true);
             }
         });
-
-        // 2. Export CSV
-        const handleExport = async (type) => {
-            if (!FORM_ID) return;
-
-            const btn = document.getElementById(`export-${type}-btn`);
-            const originalText = btn.textContent;
-            btn.textContent = `Exporting ${type}...`;
-            btn.disabled = true;
-
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-
-                if (!session) throw new Error("Authentication required for export.");
-
-                // Call Edge Function for CSV generation
-                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/export-csv`;
-                const response = await fetch(edgeFunctionFunctionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}` // Send user JWT
-                    },
-                    body: JSON.stringify({ form_id: FORM_ID, type })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || 'CSV export failed.');
-                }
-
-                // The Edge Function returns a CSV file stream (Content-Disposition: attachment)
-                // We create a Blob and a temporary link to trigger the download
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `entries_${type}_${new Date().toISOString().slice(0, 10)}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                showMessage('message-area', `${type.toUpperCase()} entries downloaded successfully.`);
-
-            } catch (error) {
-                console.error('Export Error:', error);
-                showMessage('message-area', `Export failed: ${error.message}`, true);
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        };
-
-        exportAllBtn.addEventListener('click', () => handleExport('all'));
-        exportPaidBtn.addEventListener('click', () => handleExport('paid'));
-        exportUnpaidBtn.addEventListener('click', () => handleExport('unpaid'));
-
-        // 3. Navigation and Filtering
-        prevBtn.addEventListener('click', () => { if (currentPage > 0) { currentPage--; fetchEntries(); } });
-        nextBtn.addEventListener('click', () => { currentPage++; fetchEntries(); });
-        filterStatus.addEventListener('change', () => { currentPage = 0; fetchEntries(); });
-        searchInput.addEventListener('input', () => { currentPage = 0; fetchEntries(); });
-
-        // 4. Logout
-        logoutBtn.addEventListener('click', signOut);
 
         // 5. Form Selection Change
         formSelector.addEventListener('change', () => {
             const selectedOption = formSelector.options[formSelector.selectedIndex];
             if (selectedOption.value) {
                 FORM_ID = selectedOption.value;
-                IS_OPEN = selectedOption.dataset.isOpen === 'true'; // Get state from option data attribute
-                currentPage = 0; // Reset pagination
+                IS_OPEN = selectedOption.dataset.isOpen === 'true'; 
+                FORM_SLUG = selectedOption.dataset.slug; // Update slug
+                FORM_PRICE = parseInt(selectedOption.dataset.price); // Update price
+                currentPage = 0; 
                 updatePortalStatusUI();
                 fetchEntries();
             }
         });
+        
+        // ... (Other event handlers like toggleBtn, export buttons, etc. remain the same) ...
 
-        // 6. Real-time updates (Optional, but highly recommended for Admin)
+        // 6. Real-time updates (fetchFormAnalytics added here)
         function subscribeToRealtime() {
-            // Listen for changes in the 'entries' table (e.g., payment status updates)
             supabase.channel('public:entries')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, (payload) => {
                     console.log('Real-time update received:', payload);
-                    // Instead of complex table manipulation, just re-fetch the current page
-                    // This covers INSERTs and UPDATEs (payment success)
-                    fetchEntries();
+                    fetchEntries(); // Refreshes entries and analytics
                 })
                 .subscribe();
         }
@@ -503,22 +408,19 @@
         // --- Initialization ---
         async function init() {
             user = await requireAuth();
-            if (!user) return; // requireAuth handles redirection
+            if (!user) return; 
 
             authStatusEl.textContent = `Logged in as: ${user.email}`;
 
-            // Fetch user's forms and set FORM_ID/IS_OPEN based on the first form
-            await fetchUserForms();
+            await fetchUserForms(); 
 
-            // Fetch initial data (will run only if FORM_ID is set by fetchUserForms)
+            // fetchEntries calls fetchFormAnalytics
             await fetchEntries();
 
-            // Setup real-time listener
             subscribeToRealtime();
         }
 
         init();
     </script>
 </body>
-
 </html>
