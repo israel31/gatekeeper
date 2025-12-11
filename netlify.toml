@@ -1,0 +1,11 @@
+[[redirects]]
+  from = "/f/:slug"
+  to = "/form-viewer.html.html?slug=:slug"
+  status = 200
+  force = true # Ensures the rewrite happens regardless of the file existing at the source path
+
+[[redirects]]
+  from = "/f/:slug/"
+  to = "/form-viewer.html.html?slug=:slug"
+  status = 200
+  force = true
