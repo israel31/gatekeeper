@@ -1,1 +1,1 @@
-/form-viewer.html slug=:slug  /f/:slug  200
+/f/:slug slug=:slug /form-viewer.html  200
