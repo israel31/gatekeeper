@@ -1,2 +1,3 @@
-/f/:slug    /form-viewer.html?slug=:slug    200
+/f/*  /form-viewer.html?slug=:splat  200
+
 
