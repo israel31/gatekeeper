@@ -1,9 +1,10 @@
-[[redirects]]
-  from = "/home"
-  to = "/"
-  status = 200
-  force = true # Ensures the rewrite happens regardless of the file existing at the source path
+# [[redirects]]
+#  from = "/home"
+#  to = "/"
+#  status = 200
+#  force = true # Ensures the rewrite happens regardless of the file existing at the source path
   
+
 
 
 
