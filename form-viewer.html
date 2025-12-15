@@ -171,10 +171,10 @@
             });
 
             const submissionData = {
-                slug: SLUG, // UPDATED: Send slug instead of form_id
-                name: document.getElementById('name').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                answers: JSON.stringify(customAnswers)
+                form_id: FORM_CONFIG.id, // ✅ THIS IS THE KEY FIX
+  name: document.getElementById('name').value.trim(),
+  email: document.getElementById('email').value.trim(),
+  answers: JSON.stringify(customAnswers)
             };
 
             // Call Edge Function to create entry and initialize payment
@@ -227,3 +227,4 @@
 </body>
 
 </html>
+
