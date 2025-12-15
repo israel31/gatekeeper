@@ -1,6 +1,5 @@
 export async function handler(event) {
-  const path = event.path || "";
-  const slug = path.replace(/^\/f\//, "");
+  const slug = event.path.replace("/f/", "");
 
   return {
     statusCode: 302,
