@@ -191,16 +191,31 @@
         };
 
         // Simple JSON formatting for display
-        const formatAnswers = (jsonString) => {
-            try {
-                const answers = JSON.parse(jsonString);
-                return Object.entries(answers).map(([key, value]) => 
-                    `<div class="text-xs text-gray-500">${key}: ${value}</div>`
-                ).join('');
-            } catch (e) {
-                return '<span class="text-xs text-red-400">Invalid JSON</span>';
-            }
-        };
+        const formatAnswers = (data) => {
+    let answers = {};
+
+    // Check type: string or object
+    if (!data) {
+        answers = {};
+    } else if (typeof data === 'string') {
+        try {
+            answers = JSON.parse(data);
+        } catch (e) {
+            console.error("Invalid JSON in answers:", data, e);
+            return '<span class="text-xs text-red-400">Invalid JSON</span>';
+        }
+    } else if (typeof data === 'object') {
+        answers = data;
+    } else {
+        return '<span class="text-xs text-red-400">Invalid Data</span>';
+    }
+
+    // Render key-value pairs
+    return Object.entries(answers).map(([key, value]) =>
+        `<div class="text-xs text-gray-500">${key}: ${value}</div>`
+    ).join('');
+};
+
 
         const renderTable = (entries) => {
             tableBody.innerHTML = '';
@@ -604,4 +619,5 @@
     </script>
 </body>
 </html>
+
 
