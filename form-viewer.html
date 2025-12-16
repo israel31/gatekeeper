@@ -253,78 +253,10 @@
             }
         }
 
-        // 2. Handle Form Submission
-        formEl.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!FORM_CONFIG) return;
-
-            submitBtn.disabled = true;
-            messageArea.classList.add('hidden');
-            submitBtn.textContent = 'Processing...';
-
-            // Gather inputs
-            const customAnswers = {};
-            FORM_CONFIG.fields.forEach(field => {
-                const inputEl = document.getElementById(field.field_key);
-                if (inputEl) {
-                    customAnswers[field.field_key] = inputEl.value.trim();
-                }
-            });
-
-            const submissionData = {
-                form_id: FORM_CONFIG.id, // ✅ THIS IS THE KEY FIX
-                name: document.getElementById('name').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                answers: JSON.stringify(customAnswers)
-            };
-
-            // Call Edge Function to create entry and initialize payment
-            try {
-                // Ensure the Edge Function URL is correct (e.g., /functions/v1/create-entry)
-                const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/create-entry`;
-
-                const response = await fetch(edgeFunctionUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(submissionData)
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.error || 'Submission failed.');
-                }
-
-                // NEW LOGIC: Handle free registration vs. required payment
-                if (result.requires_payment === false) {
-                    // Success for free registration
-                    window.location.href = `/thank-you.html?reference=${result.reference}`;
-                    return;
-                }
-
-                // Required payment: Redirect to Paystack
-                window.location.href = result.authorization_url;
-
-            } catch (error) {
-                console.error('Submission Error:', error);
-                showMessage('message-area', `Error: ${error.message}`, true);
-
-                // Reset button text using stored config
-                const priceText = FORM_CONFIG.requires_payment && FORM_CONFIG.price > 0
-                    ? formatCurrency(FORM_CONFIG.price)
-                    : 'Registration';
-
-                submitBtn.textContent = FORM_CONFIG.requires_payment && FORM_CONFIG.price > 0
-                    ? `Submit & Pay (${priceText})`
-                    : `Submit ${priceText}`;
-
-                submitBtn.disabled = false;
-            }
-        });
-
         // Initialize
         fetchFormConfig();
     </script>
 </body>
 
 </html>
+
