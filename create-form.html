@@ -160,23 +160,23 @@
 
 
         // Show dropdown options only if type is dropdown
-        fieldItem.querySelector('[data-field-prop="type"]').addEventListener('change', (e) => {
-            const optionsContainer = fieldItem.querySelector('.dropdown-options-container');
-            if (e.target.value === 'dropdown') {
-                optionsContainer.classList.remove('hidden');
-            } else {
-                optionsContainer.classList.add('hidden');
-            }
-        });
+        // fieldItem.querySelector('[data-field-prop="type"]').addEventListener('change', (e) => {
+        //     const optionsContainer = fieldItem.querySelector('.dropdown-options-container');
+        //     if (e.target.value === 'dropdown') {
+        //         optionsContainer.classList.remove('hidden');
+        //     } else {
+        //         optionsContainer.classList.add('hidden');
+        //     }
+        // });
 
-        // Add more options dynamically
-        fieldItem.querySelector('.add-option-btn').addEventListener('click', () => {
-            const newOption = document.createElement('input');
-            newOption.type = 'text';
-            newOption.className = 'p-2 border rounded-lg text-sm dropdown-option';
-            newOption.placeholder = `Option ${fieldItem.querySelectorAll('.dropdown-option').length + 1}`;
-            fieldItem.querySelector('.dropdown-options-container').insertBefore(newOption, fieldItem.querySelector('.add-option-btn'));
-        });
+        // // Add more options dynamically
+        // fieldItem.querySelector('.add-option-btn').addEventListener('click', () => {
+        //     const newOption = document.createElement('input');
+        //     newOption.type = 'text';
+        //     newOption.className = 'p-2 border rounded-lg text-sm dropdown-option';
+        //     newOption.placeholder = `Option ${fieldItem.querySelectorAll('.dropdown-option').length + 1}`;
+        //     fieldItem.querySelector('.dropdown-options-container').insertBefore(newOption, fieldItem.querySelector('.add-option-btn'));
+        // });
 
 
         // Dynamic Field Template
@@ -413,3 +413,4 @@
 </body>
 
 </html>
+
