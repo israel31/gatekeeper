@@ -1,126 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create New Form</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-        }
-
-        .card {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px -5px rgba(0, 0, 0, 0.04);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .input-primary { width: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.875rem; transition: all; }
+        .input-primary:focus { border-color: #0a2540; ring: 2px solid rgba(10, 37, 64, 0.1); outline: none; }
     </style>
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
 </head>
+<body class="min-h-screen text-slate-800 pb-12">
 
-<body class="min-h-screen">
-
-    <header class="bg-white shadow sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-900">Form Management</h1>
-            <a href="/admin.html"
-                class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded-lg text-sm transition">
-                &larr; Back to Dashboard
-            </a>
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-lg font-bold text-[#0a2540] flex items-center gap-2">
+                <i data-lucide="layout-template" class="w-5 h-5"></i> Form Creator
+            </h1>
+            <a href="/admin.html" class="text-sm font-medium text-slate-500 hover:text-[#0a2540] transition">Cancel</a>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="bg-white card rounded-xl p-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6" id="form-action-title">Create New Registration Form</h2>
-            <div id="message-area" class="text-sm font-medium hidden p-3 rounded-lg mb-4"></div>
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+            <div id="message-area" class="hidden p-4 mb-6 rounded-xl bg-blue-50 text-blue-700 text-sm font-medium"></div>
 
-            <form id="form-creator" class="space-y-8">
+            <form id="form-creator" class="space-y-12">
 
-                <div class="space-y-4 border-b pb-6">
-                    <h3 class="text-xl font-semibold text-gray-700">1. Basic Setup</h3>
-
-                    <div>
-                        <label for="title" class="block text-sm font-medium text-gray-700">Form Title *</label>
-                        <input type="text" id="title" required
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border"
-                            placeholder="Example: 2026 Cohort Registration">
+                <div class="space-y-6">
+                    <div class="border-b border-slate-100 pb-4">
+                        <h3 class="text-lg font-bold text-slate-900">1. Basic Details</h3>
+                        <p class="text-sm text-slate-500">What is this registration for?</p>
                     </div>
 
-                    <div>
-                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea id="description" rows="2"
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border"
-                            placeholder="Brief details about this registration."></textarea>
-                    </div>
-
-                    <div>
-                        <label for="slug" class="block text-sm font-medium text-gray-700">Unique Link Slug *</label>
-                        <input type="text" id="slug" required
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border"
-                            placeholder="e.g., your-cohort-2026">
-                        <p class="mt-1 text-xs text-gray-500">Public URL will be: /f/<span
-                                id="slug-preview">your-cohort-2026</span></p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Form Title</label>
+                            <input type="text" id="title" required class="input-primary" placeholder="e.g. 2026 Cohort Registration">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Description</label>
+                            <textarea id="description" rows="2" class="input-primary" placeholder="Brief details shown on the public page."></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Unique Link Slug</label>
+                            <div class="flex items-center">
+                                <span class="bg-slate-50 border border-r-0 border-slate-200 text-slate-500 px-3 py-3.5 rounded-l-xl text-sm">/f/</span>
+                                <input type="text" id="slug" required class="input-primary rounded-l-none" placeholder="your-event-name">
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Preview: /f/<span id="slug-preview">...</span></p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="space-y-4 border-b pb-6">
-                    <h3 class="text-xl font-semibold text-gray-700">2. Payment & Redirect</h3>
-
-                    <div class="flex items-center space-x-3">
-                        <input type="checkbox" id="requires_payment" checked
-                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <label for="requires_payment" class="text-sm font-medium text-gray-700">Require Payment?</label>
+                <div class="space-y-6">
+                    <div class="border-b border-slate-100 pb-4">
+                        <h3 class="text-lg font-bold text-slate-900">2. Payment & Success</h3>
+                        <p class="text-sm text-slate-500">Set pricing and where users go after registering.</p>
                     </div>
 
-                    <div id="payment-fields" class="space-y-4 pl-6 border-l">
-                        <div>
-                            <label for="price" class="block text-sm font-medium text-gray-700">Registration Price (in
-                                Naira: ₦) *</label>
-                            <input type="number" id="price" required min="100" value="5000"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border"
-                                placeholder="Enter amount in Naira (e.g., 5000)">
-                            <p class="mt-1 text-xs text-gray-500">Note: Paystack requires amounts in kobo (e.g., 5000
-                                Naira = 500,000 kobo)</p>
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-sm font-bold text-slate-900">Require Payment?</label>
+                            <input type="checkbox" id="requires_payment" checked class="w-5 h-5 rounded text-[#0a2540] focus:ring-[#0a2540]">
+                        </div>
+
+                        <div id="payment-fields" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Price (Naira)</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-3.5 text-slate-400">₦</span>
+                                    <input type="number" id="price" required min="100" value="5000" class="input-primary pl-10" placeholder="5000">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div>
-                        <label for="whatsapp_link" class="block text-sm font-medium text-gray-700">Success Redirect URL
-                            (e.g., WhatsApp Group) *</label>
-                        <input type="url" id="whatsapp_link" required
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border"
-                            placeholder="https://chat.whatsapp.com/L1nkToYourCustomGroup">
-                        <p class="mt-1 text-xs text-gray-500">Where users go after successful registration/payment.</p>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Redirect URL (WhatsApp Group)</label>
+                        <input type="url" id="whatsapp_link" required class="input-primary" placeholder="https://chat.whatsapp.com/...">
+                        <p class="text-xs text-slate-400 mt-1">Users are sent here after successful submission/payment.</p>
                     </div>
-
                 </div>
 
-                <div class="space-y-4 border-b pb-6">
-                    <h3 class="text-xl font-semibold text-gray-700">3. Custom Fields</h3>
-                    <div id="field-list" class="space-y-3">
+                <div class="space-y-6">
+                    <div class="border-b border-slate-100 pb-4 flex justify-between items-end">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900">3. Custom Fields</h3>
+                            <p class="text-sm text-slate-500">Add questions beyond Name & Email.</p>
+                        </div>
                     </div>
-                    <button type="button" id="add-field-btn"
-                        class="py-2 px-4 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition text-sm">
-                        + Add Custom Input Field
+
+                    <div id="field-list" class="space-y-3">
+                        </div>
+
+                    <button type="button" id="add-field-btn" class="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-bold hover:border-[#0a2540] hover:text-[#0a2540] transition flex items-center justify-center gap-2">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Question
                     </button>
                 </div>
 
-                <button type="submit" id="save-form-btn"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
-                    Create Form
-                </button>
+                <div class="pt-6 border-t border-slate-100">
+                    <button type="submit" id="save-form-btn" class="w-full py-4 bg-[#0a2540] text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 hover:bg-[#163a5f] transition">
+                        Launch Form
+                    </button>
+                </div>
             </form>
         </div>
     </main>
 
     <script type="module">
         import { supabase, requireAuth, showMessage } from '/js/utils.js';
+        lucide.createIcons();
 
         // --- DOM Elements ---
         const formCreator = document.getElementById('form-creator');
@@ -131,131 +124,77 @@
         const fieldList = document.getElementById('field-list');
         const addFieldBtn = document.getElementById('add-field-btn');
         const saveFormBtn = document.getElementById('save-form-btn');
-
-        // --- State ---
-        let user = null;
-        let fieldCounter = 0; // Used for unique ID generation for new fields
-
-        // --- Utility Functions ---
+        let user = null; let fieldCounter = 0;
 
         function createPreviewField(label, type) {
             const previewField = document.createElement('div');
-            previewField.classList.add('flex', 'space-x-4', 'items-center', 'p-3', 'bg-gray-100', 'rounded-lg');
-
+            previewField.className = 'flex items-center gap-3 p-4 bg-slate-50 rounded-xl opacity-60 border border-slate-100';
             previewField.innerHTML = `
-        <input type="${type}" value="${label}" disabled class="flex-1 p-2 border rounded-lg text-sm bg-gray-200 cursor-not-allowed">
-        <input type="text" value="auto" disabled class="w-32 p-2 border rounded-lg text-sm bg-gray-200" title="Automatically included field">
-        <select disabled class="w-24 p-2 border rounded-lg text-sm">
-            <option selected>${type}</option>
-        </select>
-        <div class="flex items-center space-x-2 w-20">
-            <input type="checkbox" checked disabled class="h-4 w-4 rounded border-gray-300">
-            <label class="text-xs text-gray-600">Required</label>
-        </div>
-        <button type="button" disabled class="opacity-30 cursor-not-allowed text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 7a1 1 0 012 0v8a1 1 0 11-2 0V7zm4 0a1 1 0 10-2 0v8a1 1 0 102 0V7z" clip-rule="evenodd"/>
-            </svg>
-        </button>
-    `;
-
+                <div class="flex-1 font-medium text-slate-700 text-sm">${label}</div>
+                <div class="px-2 py-1 bg-slate-200 rounded text-xs text-slate-500 uppercase font-bold">${type}</div>
+                <div class="text-xs text-emerald-600 font-bold">Required</div>
+            `;
             fieldList.appendChild(previewField);
         }
 
-
-        // Show dropdown options only if type is dropdown
-        // fieldItem.querySelector('[data-field-prop="type"]').addEventListener('change', (e) => {
-        //     const optionsContainer = fieldItem.querySelector('.dropdown-options-container');
-        //     if (e.target.value === 'dropdown') {
-        //         optionsContainer.classList.remove('hidden');
-        //     } else {
-        //         optionsContainer.classList.add('hidden');
-        //     }
-        // });
-
-        // // Add more options dynamically
-        // fieldItem.querySelector('.add-option-btn').addEventListener('click', () => {
-        //     const newOption = document.createElement('input');
-        //     newOption.type = 'text';
-        //     newOption.className = 'p-2 border rounded-lg text-sm dropdown-option';
-        //     newOption.placeholder = `Option ${fieldItem.querySelectorAll('.dropdown-option').length + 1}`;
-        //     fieldItem.querySelector('.dropdown-options-container').insertBefore(newOption, fieldItem.querySelector('.add-option-btn'));
-        // });
-
-
-        // Dynamic Field Template
-        // --- Create Dynamic Field ---
         function createFieldItem(fieldLabel = '', fieldType = 'text', isRequired = true) {
             fieldCounter++;
             const fieldKey = `custom_${fieldCounter}`;
-
             const fieldItem = document.createElement('div');
-            fieldItem.classList.add('flex', 'flex-col', 'space-y-2', 'p-3', 'bg-gray-50', 'rounded-lg');
+            fieldItem.className = 'p-4 bg-white border border-slate-200 rounded-xl shadow-sm space-y-3 relative group';
             fieldItem.dataset.key = fieldKey;
 
             fieldItem.innerHTML = `
-        <div class="flex space-x-4 items-center">
-            <input type="text" class="flex-1 p-2 border rounded-lg text-sm" placeholder="Field Label (e.g., Your Instagram Handle)" value="${fieldLabel}" required data-field-prop="label">
+                <div class="flex flex-col md:flex-row gap-3">
+                    <input type="text" class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white outline-none focus:border-[#0a2540]" placeholder="Question Label (e.g. Phone Number)" value="${fieldLabel}" required data-field-prop="label">
+                    <select class="md:w-32 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" data-field-prop="type">
+                        <option value="text" ${fieldType === 'text' ? 'selected' : ''}>Text</option>
+                        <option value="email" ${fieldType === 'email' ? 'selected' : ''}>Email</option>
+                        <option value="number" ${fieldType === 'number' ? 'selected' : ''}>Number</option>
+                        <option value="dropdown" ${fieldType === 'dropdown' ? 'selected' : ''}>Dropdown</option>
+                    </select>
+                </div>
+                
+                <div class="dropdown-options-container hidden flex flex-col gap-2 pl-4 border-l-2 border-slate-100">
+                    <button type="button" class="add-option-btn text-xs font-bold text-[#0a2540] hover:underline">+ Add Option</button>
+                </div>
 
-            <input type="text" class="w-32 p-2 border rounded-lg text-sm bg-gray-200" value="${fieldKey}" readonly data-field-prop="key" title="Internal Key (auto-generated)">
-
-            <select class="w-28 p-2 border rounded-lg text-sm" data-field-prop="type">
-                <option value="text" ${fieldType === 'text' ? 'selected' : ''}>Text</option>
-                <option value="email" ${fieldType === 'email' ? 'selected' : ''}>Email</option>
-                <option value="number" ${fieldType === 'number' ? 'selected' : ''}>Number</option>
-                <option value="dropdown" ${fieldType === 'dropdown' ? 'selected' : ''}>Dropdown</option>
-            </select>
-
-            <div class="flex items-center space-x-2 w-20">
-                <input type="checkbox" ${isRequired ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300" data-field-prop="required">
-                <label class="text-xs text-gray-600">Required</label>
-            </div>
-
-            <button type="button" class="text-red-500 hover:text-red-700 transition" onclick="this.closest('div[data-key]').remove()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 7a1 1 0 012 0v8a1 1 0 11-2 0V7zm4 0a1 1 0 10-2 0v8a1 1 0 102 0V7z" clip-rule="evenodd" />
-                </svg>
-            </button>
-        </div>
-
-        <!-- Dropdown options container -->
-        <div class="dropdown-options-container hidden flex flex-col space-y-1 mt-2">
-            <button type="button" class="add-option-btn text-xs text-blue-500 hover:underline">+ Add Option</button>
-        </div>
-    `;
+                <div class="flex items-center justify-between pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" ${isRequired ? 'checked' : ''} class="w-4 h-4 rounded text-[#0a2540]" data-field-prop="required">
+                        <span class="text-xs font-medium text-slate-600">Required Field</span>
+                    </label>
+                    <button type="button" class="text-red-400 hover:text-red-600 text-xs font-bold uppercase transition" onclick="this.closest('div[data-key]').remove()">Remove</button>
+                </div>
+            `;
 
             fieldList.appendChild(fieldItem);
 
             const typeSelect = fieldItem.querySelector('[data-field-prop="type"]');
             const optionsContainer = fieldItem.querySelector('.dropdown-options-container');
 
-            // Toggle dropdown options visibility
             typeSelect.addEventListener('change', (e) => {
                 if (e.target.value === 'dropdown') {
                     optionsContainer.classList.remove('hidden');
-                    if (!optionsContainer.querySelector('input')) addDropdownOption(optionsContainer); // add one default option
+                    if (!optionsContainer.querySelector('input')) addDropdownOption(optionsContainer);
                 } else {
                     optionsContainer.classList.add('hidden');
                     optionsContainer.querySelectorAll('input').forEach(inp => inp.remove());
                 }
             });
 
-            // Add option button
             const addBtn = optionsContainer.querySelector('.add-option-btn');
             addBtn.addEventListener('click', () => addDropdownOption(optionsContainer));
-
             return fieldItem;
         }
 
-        // Helper to add a new dropdown option input
         function addDropdownOption(container) {
             const optionInput = document.createElement('input');
             optionInput.type = 'text';
-            optionInput.className = 'p-2 border rounded-lg text-sm dropdown-option';
+            optionInput.className = 'p-2 border border-slate-200 rounded-lg text-xs dropdown-option';
             optionInput.placeholder = `Option ${container.querySelectorAll('.dropdown-option').length + 1}`;
             container.insertBefore(optionInput, container.querySelector('.add-option-btn'));
         }
-
 
         function gatherFormData() {
             const formData = {
@@ -263,159 +202,64 @@
                 description: document.getElementById('description').value.trim(),
                 slug: slugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'),
                 whatsapp_link: document.getElementById('whatsapp_link').value.trim(),
-                user_id: user.id,
-                is_open: true
+                user_id: user.id, is_open: true
             };
-
             formData.requires_payment = requiresPaymentCheckbox.checked;
             if (formData.requires_payment) {
                 const priceNaira = parseFloat(document.getElementById('price').value);
                 formData.price = Math.round(priceNaira * 100);
                 if (formData.price < 100) throw new Error("Price must be at least ₦1 for payment.");
-            } else {
-                formData.price = 0;
-            }
+            } else { formData.price = 0; }
 
-            const customFields = [];
-            let order = 0;
-
+            const customFields = []; let order = 0;
             fieldList.querySelectorAll('[data-key]').forEach(fieldItem => {
                 const label = fieldItem.querySelector('[data-field-prop="label"]').value.trim();
                 const type = fieldItem.querySelector('[data-field-prop="type"]').value;
                 const required = fieldItem.querySelector('[data-field-prop="required"]').checked;
-
                 if (!label) throw new Error("All custom fields must have a label.");
-
-                // Auto-generate field key from label
                 const key = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-
-                // Dropdown options
                 let options = [];
                 if (type === 'dropdown') {
-                    options = Array.from(fieldItem.querySelectorAll('.dropdown-option'))
-                        .map(opt => opt.value.trim())
-                        .filter(val => val !== '');
+                    options = Array.from(fieldItem.querySelectorAll('.dropdown-option')).map(opt => opt.value.trim()).filter(val => val !== '');
                     if (options.length === 0) throw new Error(`Dropdown field "${label}" must have at least one option.`);
                 }
-
-                customFields.push({
-                    field_key: key,
-                    field_label: label,
-                    field_type: type,
-                    is_required: required,
-                    options: options,
-                    field_order: order++
-                });
+                customFields.push({ field_key: key, field_label: label, field_type: type, is_required: required, options: options, field_order: order++ });
             });
-
             return { formData, customFields };
         }
 
-
-        // --- Event Listeners ---
-
-        // Add Dynamic Field
-        addFieldBtn.addEventListener('click', () => {
-            createFieldItem();
-        });
-
-        // Toggle Payment Fields Visibility
+        addFieldBtn.addEventListener('click', () => { createFieldItem(); });
         requiresPaymentCheckbox.addEventListener('change', () => {
-            if (requiresPaymentCheckbox.checked) {
-                paymentFields.classList.remove('hidden');
-            } else {
-                paymentFields.classList.add('hidden');
-            }
+            if (requiresPaymentCheckbox.checked) { paymentFields.classList.remove('hidden'); } else { paymentFields.classList.add('hidden'); }
         });
-
-        // Update Slug Preview (basic sanitization)
         slugInput.addEventListener('input', () => {
             const sanitizedSlug = slugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
             slugPreview.textContent = sanitizedSlug || '...';
         });
 
-        // Form Submission Handler
         formCreator.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            saveFormBtn.disabled = true;
-            saveFormBtn.textContent = 'Saving Form...';
-
-            let data;
-            try {
-                data = gatherFormData();
-            } catch (error) {
-                showMessage('message-area', error.message, true);
-                saveFormBtn.textContent = 'Create Form';
-                saveFormBtn.disabled = false;
-                return;
-            }
+            e.preventDefault(); saveFormBtn.disabled = true; saveFormBtn.textContent = 'Saving...';
+            let data; try { data = gatherFormData(); } catch (error) { showMessage('message-area', error.message, true); saveFormBtn.textContent = 'Launch Form'; saveFormBtn.disabled = false; return; }
 
             try {
-                // 1. Insert New Form
-                const { data: formResult, error: formError } = await supabase
-                    .from('forms')
-                    .insert(data.formData)
-                    .select('id, slug')
-                    .single();
-
-                if (formError) throw new Error(formError.message || 'Failed to save form configuration.');
-
-                const newFormId = formResult.id;
-
-                // 2. Insert Dynamic Fields (batch insert)
+                const { data: formResult, error: formError } = await supabase.from('forms').insert(data.formData).select('id, slug').single();
+                if (formError) throw new Error(formError.message);
                 if (data.customFields.length > 0) {
-                    const fieldsToInsert = data.customFields.map(field => ({
-                        ...field,
-                        form_id: newFormId
-                    }));
-
-                    const { error: fieldsError } = await supabase
-                        .from('form_fields')
-                        .insert(fieldsToInsert);
-
-                    if (fieldsError) throw new Error(fieldsError.message || 'Failed to save custom fields.');
+                    const fieldsToInsert = data.customFields.map(field => ({ ...field, form_id: formResult.id }));
+                    const { error: fieldsError } = await supabase.from('form_fields').insert(fieldsToInsert);
+                    if (fieldsError) throw new Error(fieldsError.message);
                 }
-
-                // 3. Success
-                showMessage('message-area', `Form created successfully! Share this link: /f/${formResult.slug}`, false);
-
-                // Redirect user to the dashboard to manage the new form
-                setTimeout(() => {
-                    window.location.href = '/admin.html';
-                }, 3000);
-
-
-            } catch (error) {
-                console.error('Form Creation Error:', error);
-                // NOTE: If field creation fails, the form record is left in the DB. A transaction system would be better here.
-                showMessage('message-area', `Error saving form: ${error.message}`, true);
-
-            } finally {
-                saveFormBtn.textContent = 'Create Form';
-                saveFormBtn.disabled = false;
-            }
+                showMessage('message-area', `Form created!`, false);
+                setTimeout(() => { window.location.href = '/admin.html'; }, 2000);
+            } catch (error) { showMessage('message-area', error.message, true); } finally { saveFormBtn.textContent = 'Launch Form'; saveFormBtn.disabled = false; }
         });
 
-
-        // --- Initialization ---
         async function init() {
-            user = await requireAuth();
-            if (!user) return; // requireAuth handles redirection
-
-            // Show frontend-only preview fields
-            createPreviewField('Full Name', 'text');
-            createPreviewField('Email Address', 'email');
-
-            // Add one default field to start
-            createFieldItem('phone_number', 'Phone Number', 'text', true);
+            user = await requireAuth(); if (!user) return;
+            createPreviewField('Full Name', 'text'); createPreviewField('Email Address', 'email');
+            createFieldItem('Phone Number', 'text', true);
         }
-
         init();
     </script>
-
 </body>
-
 </html>
-
-
