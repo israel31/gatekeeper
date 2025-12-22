@@ -3,71 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payout Setup</title>
+    <title>Payout Settings</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
-        .card { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px -5px rgba(0, 0, 0, 0.04); }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(circle at top right, #e2e8f0 0%, #f8fafc 100%);
+        }
+        .input-with-icon {
+            padding-left: 2.75rem; /* Space for icon */
+        }
+        .form-input {
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+        .form-input:focus {
+            border-color: #10b981;
+            ring: 4px solid rgba(16, 185, 129, 0.1);
+            outline: none;
+        }
     </style>
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen text-slate-800 pb-12">
 
-    <header class="bg-white shadow sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-900">Payout Setup</h1>
-            <a href="/admin.html" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded-lg text-sm transition">
-                &larr; Back to Dashboard
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
+        <div class="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-lg font-bold text-[#0a2540] flex items-center gap-2">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+                <span>Payout Configuration</span>
+            </h1>
+            <a href="/admin.html" class="text-sm font-medium text-slate-500 hover:text-[#0a2540] transition flex items-center gap-1">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
             </a>
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="bg-white card rounded-xl p-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Creator Payout Configuration</h2>
-            <p class="text-gray-600 mb-6">Enter your bank details to receive payments from successful registrations.</p>
+    <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+        <div class="text-center space-y-2 mb-8">
+            <h2 class="text-2xl font-bold text-[#0a2540]">Banking Details</h2>
+            <p class="text-slate-500 max-w-md mx-auto">Connect your bank account to automatically receive earnings from your registration forms.</p>
+        </div>
+
+        <div id="status-card" class="hidden bg-[#0a2540] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500 opacity-10 rounded-full -ml-10 -mb-10 pointer-events-none"></div>
             
-            <div id="message-area" class="text-sm font-medium hidden p-3 rounded-lg mb-4"></div>
-
-            <form id="payout-form" class="space-y-6">
-
+            <div class="relative z-10 flex items-start gap-4">
+                <div class="p-3 bg-white/10 rounded-xl">
+                    <i data-lucide="activity" class="w-6 h-6 text-emerald-400"></i>
+                </div>
                 <div>
-                    <label for="bank_code" class="block text-sm font-medium text-gray-700">Bank Name *</label>
-                    <select id="bank_code" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border">
-                        <option value="">-- Loading Banks... --</option>
-                    </select>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-200 mb-1">Current Status</h3>
+                    <div id="current-status-text" class="text-sm font-medium leading-relaxed opacity-90">
+                        Loading status...
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <div>
-                    <label for="account_number" class="block text-sm font-medium text-gray-700">Account Number *</label>
-                    <input type="text" id="account_number" required pattern="\d{10}" maxlength="10" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border" placeholder="10-digit account number">
-                </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 md:p-8">
                 
-                <div id="account-name-verification" class="mt-4 p-3 border border-dashed rounded-lg bg-yellow-50 text-yellow-800 hidden">
-                    Verifying account name...
-                </div>
-                
-                <div id="verification-result" class="mt-2 text-sm font-semibold hidden"></div>
+                <div id="message-area" class="text-sm font-medium hidden p-4 rounded-xl mb-6 bg-red-50 text-red-600 border border-red-100"></div>
 
-                <button type="submit" id="save-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
-                    Save Payout Details
-                </button>
-            </form>
-            
-            <div id="status-card" class="mt-8 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-lg hidden">
-                <p class="font-bold text-blue-800">Current Payout Status</p>
-                <p class="text-sm text-blue-700 mt-1" id="current-status-text"></p>
+                <form id="payout-form" class="space-y-6">
+                    
+                    <div class="space-y-1.5">
+                        <label for="bank_code" class="text-xs font-bold text-slate-500 uppercase ml-1">Select Bank <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="landmark" class="w-5 h-5"></i>
+                            </div>
+                            <select id="bank_code" required class="block w-full rounded-xl bg-slate-50 py-3.5 input-with-icon form-input text-slate-700 font-medium appearance-none cursor-pointer">
+                                <option value="">Loading Banks...</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label for="account_number" class="text-xs font-bold text-slate-500 uppercase ml-1">Account Number <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="hash" class="w-5 h-5"></i>
+                            </div>
+                            <input type="text" id="account_number" required pattern="\d{10}" maxlength="10" 
+                                class="block w-full rounded-xl bg-slate-50 py-3.5 input-with-icon form-input text-slate-700 font-medium font-mono placeholder-slate-400" 
+                                placeholder="0123456789">
+                        </div>
+                    </div>
+                    
+                    <div id="account-name-verification" class="hidden p-3 rounded-xl bg-amber-50 text-amber-700 text-sm font-medium flex items-center gap-2 animate-pulse">
+                        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Verifying account details...
+                    </div>
+                    
+                    <div id="verification-result" class="hidden text-sm font-semibold p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-600"></div>
+
+                    <button type="submit" id="save-button" class="w-full py-4 px-6 rounded-xl shadow-lg shadow-emerald-500/20 text-lg font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4">
+                        <i data-lucide="save" class="w-5 h-5"></i>
+                        Save Payout Details
+                    </button>
+                </form>
             </div>
             
+            <div class="bg-slate-50 p-4 border-t border-slate-200 flex items-center justify-center gap-2 text-xs text-slate-400">
+                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i>
+                <span>Bank details are encrypted and processed securely by Paystack.</span>
+            </div>
         </div>
+
     </main>
     
     <script type="module">
         import { supabase, requireAuth, showMessage, SUPABASE_URL } from './js/utils.js';
+        lucide.createIcons();
 
         // --- DOM Elements ---
         const formEl = document.getElementById('payout-form');
@@ -164,7 +219,7 @@
             e.preventDefault();
             
             saveBtn.disabled = true;
-            saveBtn.textContent = 'Processing Payout Setup...';
+            saveBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processing...';
             messageArea.classList.add('hidden');
 
             const bankCode = bankSelect.value;
@@ -207,15 +262,16 @@
                 showMessage('message-area', `Setup Failed: ${error.message}`, true);
                 
             } finally {
-                saveBtn.textContent = 'Save Payout Details';
+                saveBtn.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> Save Payout Details';
                 saveBtn.disabled = false;
+                lucide.createIcons(); // Re-init icons if content changed
             }
         });
 
         // --- Dynamic Bank List Implementation ---
         async function populateBanks() {
             const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/fetch-banks`;
-            bankSelect.innerHTML = '<option value="">-- Loading Banks... --</option>';
+            bankSelect.innerHTML = '<option value="">Loading Banks...</option>';
             
             try {
                 const response = await fetch(edgeFunctionUrl, { method: 'GET' });
@@ -226,7 +282,7 @@
                 }
                 
                 banksList = data; // Store the list globally for fetchCurrentStatus
-                bankSelect.innerHTML = '<option value="">-- Select your Bank --</option>'; // Reset dropdown
+                bankSelect.innerHTML = '<option value="">Select your Bank</option>'; // Reset dropdown
                 
                 data.forEach(bank => {
                     const option = document.createElement('option');
@@ -237,7 +293,7 @@
                 
             } catch (error) {
                 console.error("Failed to fetch banks:", error);
-                bankSelect.innerHTML = '<option value="">-- Error Loading Banks --</option>';
+                bankSelect.innerHTML = '<option value="">Error Loading Banks</option>';
                 showMessage('message-area', `Failed to load banks: ${error.message}`, true);
             }
         }
@@ -253,5 +309,4 @@
         init();
     </script>
 </body>
-
 </html>
