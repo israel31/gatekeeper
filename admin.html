@@ -309,21 +309,40 @@
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) throw new Error("Session expired.");
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/get-user-forms`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` }, });
+                
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/get-user-forms`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` }, 
+                });
                 const data = await response.json(); 
+                
                 formSelector.innerHTML = ''; 
                 if (data.length === 0) { formSelector.innerHTML = '<option>No Forms Found</option>'; return; }
+                
                 data.forEach(form => {
                     const option = document.createElement('option');
                     option.value = form.id;
                     option.textContent = `${form.title}`; 
                     option.dataset.isOpen = form.is_open;
                     option.dataset.slug = form.slug; 
-                    option.dataset.price = form.price; 
+                    
+                    // --- CHANGE HERE: Use base_price (Net) if available, otherwise price (Gross) ---
+                    // This ensures the "Total Revenue" card shows what YOU earn, not what the user paid.
+                    option.dataset.price = form.base_price || form.price; 
+                    
                     formSelector.appendChild(option);
                 });
-                FORM_ID = data[0].id; IS_OPEN = data[0].is_open; FORM_SLUG = data[0].slug; FORM_PRICE = parseInt(data[0].price);
-                toggleBtn.disabled = false; updatePortalStatusUI(); fetchEntries();
+
+                FORM_ID = data[0].id; 
+                IS_OPEN = data[0].is_open; 
+                FORM_SLUG = data[0].slug; 
+                
+                // --- CHANGE HERE: Same logic for the initial load ---
+                FORM_PRICE = parseInt(data[0].base_price || data[0].price);
+                
+                toggleBtn.disabled = false; 
+                updatePortalStatusUI(); 
+                fetchEntries();
             } catch (error) { console.error(error); }
         }
 
@@ -385,3 +404,4 @@
     </script>
 </body>
 </html>
+
