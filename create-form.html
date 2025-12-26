@@ -348,4 +348,43 @@
                     netAmount = currentVal - fees.total_fees;
                 } else {
                     // Logic: Input is Base/Gross. Net = Gross - Fees
-                    con
+                    const fees = calculateFees(currentVal);
+                    netAmount = currentVal - fees.total_fees;
+                }
+
+                if (netAmount < 0) netAmount = 0;
+                receiveText.innerText = `You receive: ₦${netAmount.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
+            }
+
+            priceInput.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value) || 0;
+                if (!PASS_FEES_CHECKBOX.checked) {
+                    lastEnteredBase = val;
+                } else {
+                    // If checked, reverse calc base just for state tracking
+                    const fees = calculateFees(val);
+                    lastEnteredBase = val - fees.total_fees; 
+                }
+                updateDisplay();
+            });
+
+            PASS_FEES_CHECKBOX.addEventListener('change', () => {
+                if (PASS_FEES_CHECKBOX.checked) {
+                    // Switch ON: Inflate price so user pays fees
+                    const newGross = calculateGrossFromNet(lastEnteredBase);
+                    priceInput.value = newGross;
+                } else {
+                    // Switch OFF: Restore base amount
+                    priceInput.value = lastEnteredBase;
+                }
+                updateDisplay();
+            });
+
+            // Initialize on load
+            updateDisplay();
+            // --- PAYSTACK FEE LOGIC INJECTION END ---
+        }
+        init();
+    </script>
+</body>
+</html>
