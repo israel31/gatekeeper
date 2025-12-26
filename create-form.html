@@ -110,7 +110,6 @@
             </form>
         </div>
     </main>
-
     <script type="module">
         import { supabase, requireAuth, showMessage } from '/js/utils.js';
         lucide.createIcons();
@@ -205,24 +204,55 @@
                 user_id: user.id, is_open: true
             };
             formData.requires_payment = requiresPaymentCheckbox.checked;
-            
+
             // --- UPDATED PAYMENT LOGIC START ---
             if (formData.requires_payment) {
-                const inputPrice = parseFloat(document.getElementById('price').value);
-                const passFees = document.getElementById('pass_fees').checked; // Check if checkbox exists and is checked
+                // 1. Get the raw value from the input (This is the Gross amount if box is checked)
+                const inputVal = parseFloat(document.getElementById('price').value);
+                const isPassingFees = document.getElementById('pass_fees') && document.getElementById('pass_fees').checked;
                 
-                // Recalculate fees based on the final input value to be safe
-                let paystackFee = inputPrice * 0.015;
-                if (inputPrice >= 2500) paystackFee += 100;
-                if (paystackFee > 2000) paystackFee = 2000;
-                
+                // 2. Define our calculation variables
+                let priceToChargeUser = 0; // This goes into 'price' column (for Paystack)
+                let netEarnings = 0;       // This goes into 'base_price' column (for your records)
                 const platformFee = 10;
-                const totalFees = paystackFee + platformFee;
+                
+                if (isPassingFees) {
+                    // CASE A: User pays fees. 
+                    // The Input box ALREADY shows the inflated price (e.g., 5183)
+                    priceToChargeUser = inputVal;
+                    
+                    // We calculate backwards to find your Net Earnings
+                    // (This logic mirrors the UI calculation to ensure consistency)
+                    let paystackFee = priceToChargeUser * 0.015;
+                    if (priceToChargeUser >= 2500) paystackFee += 100;
+                    if (paystackFee > 2000) paystackFee = 2000;
+                    
+                    const totalFees = paystackFee + platformFee;
+                    netEarnings = priceToChargeUser - totalFees;
+                    
+                } else {
+                    // CASE B: You absorb fees.
+                    // The Input box shows the Base price (e.g., 5000)
+                    priceToChargeUser = inputVal;
+                    
+                    // The fees come out of your pocket, reducing your Net Earnings
+                    let paystackFee = priceToChargeUser * 0.015;
+                    if (priceToChargeUser >= 2500) paystackFee += 100;
+                    if (paystackFee > 2000) paystackFee = 2000;
 
-                // Set Payload Values (Converted to Kobo)
-                formData.price = Math.round(inputPrice * 100); // Total amount registrant pays
-                formData.base_price = Math.round((inputPrice - totalFees) * 100); // Net amount you get
-                formData.platform_fee = Math.round(platformFee * 100); // 10 Naira in Kobo
+                    const totalFees = paystackFee + platformFee;
+                    netEarnings = priceToChargeUser - totalFees;
+                }
+
+                // 3. Save to formData (Converting to Kobo for DB)
+                // 'price' MUST be the total charge for the public form to work.
+                formData.price = Math.round(priceToChargeUser * 100); 
+                
+                // 'base_price' is your actual earnings (Net).
+                formData.base_price = Math.round(netEarnings * 100);
+                
+                // 'platform_fee' is tracked separately.
+                formData.platform_fee = Math.round(platformFee * 100);
 
                 if (formData.price < 100) throw new Error("Price must be at least ₦1 for payment.");
             } else { 
