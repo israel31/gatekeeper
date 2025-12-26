@@ -338,7 +338,7 @@
                 FORM_SLUG = data[0].slug; 
                 
                 // --- CHANGE HERE: Same logic for the initial load ---
-                FORM_PRICE = parseInt(data[0].base_price || data[0].price);
+                FORM_PRICE = parseInt(data[0].base_price);
                 
                 toggleBtn.disabled = false; 
                 updatePortalStatusUI(); 
@@ -404,4 +404,5 @@
     </script>
 </body>
 </html>
+
 
