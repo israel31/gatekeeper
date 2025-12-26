@@ -10,256 +10,165 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .input-primary { width: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.875rem; transition: all; }
-        .input-primary:focus { border-color: #0a2540; ring: 2px solid rgba(10, 37, 64, 0.1); outline: none; }
+        .input-primary:focus { border-color: #0a2540; outline: none; }
     </style>
 </head>
+
 <body class="min-h-screen text-slate-800 pb-12">
 
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-lg font-bold text-[#0a2540] flex items-center gap-2">
-                <i data-lucide="layout-template" class="w-5 h-5"></i> Form Creator
-            </h1>
-            <a href="/admin.html" class="text-sm font-medium text-slate-500 hover:text-[#0a2540] transition">Cancel</a>
+<header class="bg-white border-b border-slate-200 sticky top-0 z-20">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-lg font-bold text-[#0a2540] flex items-center gap-2">
+            <i data-lucide="layout-template" class="w-5 h-5"></i> Form Creator
+        </h1>
+        <a href="/admin.html" class="text-sm font-medium text-slate-500 hover:text-[#0a2540] transition">Cancel</a>
+    </div>
+</header>
+
+<main class="max-w-4xl mx-auto px-4 py-8">
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+
+<form id="form-creator" class="space-y-12">
+
+<!-- PAYMENT -->
+<div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+    <div class="flex items-center justify-between mb-4">
+        <label class="text-sm font-bold text-slate-900">Require Payment?</label>
+        <input type="checkbox" id="requires_payment" checked class="w-5 h-5 rounded text-[#0a2540]">
+    </div>
+
+    <div id="payment-fields" class="space-y-4">
+        <div>
+            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Price (Naira)</label>
+            <div class="relative">
+                <span class="absolute left-4 top-3.5 text-slate-400">₦</span>
+                <input type="number" id="price" min="100" value="5000" class="input-primary pl-10">
+            </div>
         </div>
-    </header>
+    </div>
+</div>
 
-    <main class="max-w-4xl mx-auto px-4 py-8">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-            <div id="message-area" class="hidden p-4 mb-6 rounded-xl bg-blue-50 text-blue-700 text-sm font-medium"></div>
+<button type="submit" id="save-form-btn"
+    class="w-full py-4 bg-[#0a2540] text-white font-bold rounded-xl">
+    Launch Form
+</button>
 
-            <form id="form-creator" class="space-y-12">
+</form>
+</div>
+</main>
 
-                <div class="space-y-6">
-                    <div class="border-b border-slate-100 pb-4">
-                        <h3 class="text-lg font-bold text-slate-900">1. Basic Details</h3>
-                        <p class="text-sm text-slate-500">What is this registration for?</p>
-                    </div>
+<script type="module">
+import { supabase, requireAuth } from '/js/utils.js';
+lucide.createIcons();
 
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Form Title</label>
-                            <input type="text" id="title" required class="input-primary" placeholder="e.g. 2026 Cohort Registration">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Description</label>
-                            <textarea id="description" rows="2" class="input-primary" placeholder="Brief details shown on the public page."></textarea>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Unique Link Slug</label>
-                            <div class="flex items-center">
-                                <span class="bg-slate-50 border border-r-0 border-slate-200 text-slate-500 px-3 py-3.5 rounded-l-xl text-sm">/f/</span>
-                                <input type="text" id="slug" required class="input-primary rounded-l-none" placeholder="your-event-name">
-                            </div>
-                            <p class="text-xs text-slate-400 mt-1">Preview: /f/<span id="slug-preview">...</span></p>
-                        </div>
-                    </div>
-                </div>
+/* ===============================
+   PAYSTACK + LIVE BREAKDOWN
+================================ */
 
-                <div class="space-y-6">
-                    <div class="border-b border-slate-100 pb-4">
-                        <h3 class="text-lg font-bold text-slate-900">2. Payment & Success</h3>
-                        <p class="text-sm text-slate-500">Set pricing and where users go after registering.</p>
-                    </div>
+const PAYSTACK_PERCENT = 0.015;
+const PAYSTACK_FLAT = 100;
+const PAYSTACK_THRESHOLD = 2500;
+const PAYSTACK_CAP = 2000;
+const PLATFORM_FEE = 10;
 
-                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                        <div class="flex items-center justify-between mb-4">
-                            <label class="text-sm font-bold text-slate-900">Require Payment?</label>
-                            <input type="checkbox" id="requires_payment" checked class="w-5 h-5 rounded text-[#0a2540] focus:ring-[#0a2540]">
-                        </div>
+const priceInput = document.getElementById('price');
 
-                        <div id="payment-fields" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Price (Naira)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-3.5 text-slate-400">₦</span>
-                                    <input type="number" id="price" required min="100" value="5000" class="input-primary pl-10" placeholder="5000">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+let baseAmount = Number(priceInput.value);
 
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">Redirect URL (WhatsApp Group)</label>
-                        <input type="url" id="whatsapp_link" required class="input-primary" placeholder="https://chat.whatsapp.com/...">
-                        <p class="text-xs text-slate-400 mt-1">Users are sent here after successful submission/payment.</p>
-                    </div>
-                </div>
+/* Toggle */
+const toggleWrap = document.createElement('div');
+toggleWrap.className = "flex items-center gap-2 mt-3 text-sm text-slate-600";
 
-                <div class="space-y-6">
-                    <div class="border-b border-slate-100 pb-4 flex justify-between items-end">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-900">3. Custom Fields</h3>
-                            <p class="text-sm text-slate-500">Add questions beyond Name & Email.</p>
-                        </div>
-                    </div>
+toggleWrap.innerHTML = `
+  <input type="checkbox" id="add_charges" checked class="w-4 h-4 rounded text-[#0a2540]">
+  <label for="add_charges">Let registrant pay transaction charges</label>
+`;
 
-                    <div id="field-list" class="space-y-3">
-                        </div>
+priceInput.closest('div').appendChild(toggleWrap);
 
-                    <button type="button" id="add-field-btn" class="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-bold hover:border-[#0a2540] hover:text-[#0a2540] transition flex items-center justify-center gap-2">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Question
-                    </button>
-                </div>
+const addChargesCheckbox = document.getElementById('add_charges');
 
-                <div class="pt-6 border-t border-slate-100">
-                    <button type="submit" id="save-form-btn" class="w-full py-4 bg-[#0a2540] text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 hover:bg-[#163a5f] transition">
-                        Launch Form
-                    </button>
-                </div>
-            </form>
-        </div>
-    </main>
+/* Breakdown */
+const breakdown = document.createElement('div');
+breakdown.className = "mt-3 text-xs text-slate-500 space-y-1";
+priceInput.closest('div').appendChild(breakdown);
 
-    <script type="module">
-        import { supabase, requireAuth, showMessage } from '/js/utils.js';
-        lucide.createIcons();
+/* Helpers */
+function paystackFee(amount) {
+    let fee = amount * PAYSTACK_PERCENT;
+    if (amount >= PAYSTACK_THRESHOLD) fee += PAYSTACK_FLAT;
+    return Math.min(fee, PAYSTACK_CAP);
+}
 
-        // --- DOM Elements ---
-        const formCreator = document.getElementById('form-creator');
-        const slugInput = document.getElementById('slug');
-        const slugPreview = document.getElementById('slug-preview');
-        const requiresPaymentCheckbox = document.getElementById('requires_payment');
-        const paymentFields = document.getElementById('payment-fields');
-        const fieldList = document.getElementById('field-list');
-        const addFieldBtn = document.getElementById('add-field-btn');
-        const saveFormBtn = document.getElementById('save-form-btn');
-        let user = null; let fieldCounter = 0;
+function chargeInclusive(amount) {
+    let gross = amount;
+    for (let i = 0; i < 5; i++) {
+        gross = amount + paystackFee(gross) + PLATFORM_FEE;
+    }
+    return Math.ceil(gross);
+}
 
-        function createPreviewField(label, type) {
-            const previewField = document.createElement('div');
-            previewField.className = 'flex items-center gap-3 p-4 bg-slate-50 rounded-xl opacity-60 border border-slate-100';
-            previewField.innerHTML = `
-                <div class="flex-1 font-medium text-slate-700 text-sm">${label}</div>
-                <div class="px-2 py-1 bg-slate-200 rounded text-xs text-slate-500 uppercase font-bold">${type}</div>
-                <div class="text-xs text-emerald-600 font-bold">Required</div>
-            `;
-            fieldList.appendChild(previewField);
-        }
+function updateUI() {
+    const entered = Number(priceInput.value);
+    if (!entered || entered < 100) return;
 
-        function createFieldItem(fieldLabel = '', fieldType = 'text', isRequired = true) {
-            fieldCounter++;
-            const fieldKey = `custom_${fieldCounter}`;
-            const fieldItem = document.createElement('div');
-            fieldItem.className = 'p-4 bg-white border border-slate-200 rounded-xl shadow-sm space-y-3 relative group';
-            fieldItem.dataset.key = fieldKey;
+    baseAmount = entered;
 
-            fieldItem.innerHTML = `
-                <div class="flex flex-col md:flex-row gap-3">
-                    <input type="text" class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white outline-none focus:border-[#0a2540]" placeholder="Question Label (e.g. Phone Number)" value="${fieldLabel}" required data-field-prop="label">
-                    <select class="md:w-32 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" data-field-prop="type">
-                        <option value="text" ${fieldType === 'text' ? 'selected' : ''}>Text</option>
-                        <option value="email" ${fieldType === 'email' ? 'selected' : ''}>Email</option>
-                        <option value="number" ${fieldType === 'number' ? 'selected' : ''}>Number</option>
-                        <option value="dropdown" ${fieldType === 'dropdown' ? 'selected' : ''}>Dropdown</option>
-                    </select>
-                </div>
-                
-                <div class="dropdown-options-container hidden flex flex-col gap-2 pl-4 border-l-2 border-slate-100">
-                    <button type="button" class="add-option-btn text-xs font-bold text-[#0a2540] hover:underline">+ Add Option</button>
-                </div>
+    if (addChargesCheckbox.checked) {
+        const gross = chargeInclusive(baseAmount);
+        const psFee = paystackFee(gross);
 
-                <div class="flex items-center justify-between pt-1">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" ${isRequired ? 'checked' : ''} class="w-4 h-4 rounded text-[#0a2540]" data-field-prop="required">
-                        <span class="text-xs font-medium text-slate-600">Required Field</span>
-                    </label>
-                    <button type="button" class="text-red-400 hover:text-red-600 text-xs font-bold uppercase transition" onclick="this.closest('div[data-key]').remove()">Remove</button>
-                </div>
-            `;
+        priceInput.value = gross;
 
-            fieldList.appendChild(fieldItem);
+        breakdown.innerHTML = `
+          <div>Registrant pays: <strong>₦${gross.toLocaleString()}</strong></div>
+          <div>Paystack fee: ₦${psFee.toLocaleString()}</div>
+          <div>Platform fee: ₦${PLATFORM_FEE}</div>
+          <div class="font-medium text-slate-700">
+            You receive: ₦${baseAmount.toLocaleString()}
+          </div>
+        `;
+    } else {
+        breakdown.innerHTML = `
+          <div>Registrant pays: <strong>₦${baseAmount.toLocaleString()}</strong></div>
+          <div class="font-medium text-slate-700">
+            You receive: ₦${baseAmount.toLocaleString()}
+          </div>
+        `;
+    }
+}
 
-            const typeSelect = fieldItem.querySelector('[data-field-prop="type"]');
-            const optionsContainer = fieldItem.querySelector('.dropdown-options-container');
+priceInput.addEventListener('input', updateUI);
+addChargesCheckbox.addEventListener('change', updateUI);
 
-            typeSelect.addEventListener('change', (e) => {
-                if (e.target.value === 'dropdown') {
-                    optionsContainer.classList.remove('hidden');
-                    if (!optionsContainer.querySelector('input')) addDropdownOption(optionsContainer);
-                } else {
-                    optionsContainer.classList.add('hidden');
-                    optionsContainer.querySelectorAll('input').forEach(inp => inp.remove());
-                }
-            });
+updateUI();
 
-            const addBtn = optionsContainer.querySelector('.add-option-btn');
-            addBtn.addEventListener('click', () => addDropdownOption(optionsContainer));
-            return fieldItem;
-        }
+/* ===============================
+   FORM SUBMIT
+================================ */
 
-        function addDropdownOption(container) {
-            const optionInput = document.createElement('input');
-            optionInput.type = 'text';
-            optionInput.className = 'p-2 border border-slate-200 rounded-lg text-xs dropdown-option';
-            optionInput.placeholder = `Option ${container.querySelectorAll('.dropdown-option').length + 1}`;
-            container.insertBefore(optionInput, container.querySelector('.add-option-btn'));
-        }
+const formCreator = document.getElementById('form-creator');
+const saveFormBtn = document.getElementById('save-form-btn');
+let user = await requireAuth();
 
-        function gatherFormData() {
-            const formData = {
-                title: document.getElementById('title').value.trim(),
-                description: document.getElementById('description').value.trim(),
-                slug: slugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'),
-                whatsapp_link: document.getElementById('whatsapp_link').value.trim(),
-                user_id: user.id, is_open: true
-            };
-            formData.requires_payment = requiresPaymentCheckbox.checked;
-            if (formData.requires_payment) {
-                const priceNaira = parseFloat(document.getElementById('price').value);
-                formData.price = Math.round(priceNaira * 100);
-                if (formData.price < 100) throw new Error("Price must be at least ₦1 for payment.");
-            } else { formData.price = 0; }
+formCreator.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    saveFormBtn.disabled = true;
 
-            const customFields = []; let order = 0;
-            fieldList.querySelectorAll('[data-key]').forEach(fieldItem => {
-                const label = fieldItem.querySelector('[data-field-prop="label"]').value.trim();
-                const type = fieldItem.querySelector('[data-field-prop="type"]').value;
-                const required = fieldItem.querySelector('[data-field-prop="required"]').checked;
-                if (!label) throw new Error("All custom fields must have a label.");
-                const key = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-                let options = [];
-                if (type === 'dropdown') {
-                    options = Array.from(fieldItem.querySelectorAll('.dropdown-option')).map(opt => opt.value.trim()).filter(val => val !== '');
-                    if (options.length === 0) throw new Error(`Dropdown field "${label}" must have at least one option.`);
-                }
-                customFields.push({ field_key: key, field_label: label, field_type: type, is_required: required, options: options, field_order: order++ });
-            });
-            return { formData, customFields };
-        }
+    const finalAmount = Number(priceInput.value);
 
-        addFieldBtn.addEventListener('click', () => { createFieldItem(); });
-        requiresPaymentCheckbox.addEventListener('change', () => {
-            if (requiresPaymentCheckbox.checked) { paymentFields.classList.remove('hidden'); } else { paymentFields.classList.add('hidden'); }
-        });
-        slugInput.addEventListener('input', () => {
-            const sanitizedSlug = slugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
-            slugPreview.textContent = sanitizedSlug || '...';
-        });
+    const formData = {
+        user_id: user.id,
+        requires_payment: true,
+        price: finalAmount * 100,
+        base_price: baseAmount * 100,
+        platform_fee: PLATFORM_FEE * 100
+    };
 
-        formCreator.addEventListener('submit', async (e) => {
-            e.preventDefault(); saveFormBtn.disabled = true; saveFormBtn.textContent = 'Saving...';
-            let data; try { data = gatherFormData(); } catch (error) { showMessage('message-area', error.message, true); saveFormBtn.textContent = 'Launch Form'; saveFormBtn.disabled = false; return; }
+    await supabase.from('forms').insert(formData);
+    window.location.href = '/admin.html';
+});
+</script>
 
-            try {
-                const { data: formResult, error: formError } = await supabase.from('forms').insert(data.formData).select('id, slug').single();
-                if (formError) throw new Error(formError.message);
-                if (data.customFields.length > 0) {
-                    const fieldsToInsert = data.customFields.map(field => ({ ...field, form_id: formResult.id }));
-                    const { error: fieldsError } = await supabase.from('form_fields').insert(fieldsToInsert);
-                    if (fieldsError) throw new Error(fieldsError.message);
-                }
-                showMessage('message-area', `Form created!`, false);
-                setTimeout(() => { window.location.href = '/admin.html'; }, 2000);
-            } catch (error) { showMessage('message-area', error.message, true); } finally { saveFormBtn.textContent = 'Launch Form'; saveFormBtn.disabled = false; }
-        });
-
-        async function init() {
-            user = await requireAuth(); if (!user) return;
-            createPreviewField('Full Name', 'text'); createPreviewField('Email Address', 'email');
-            createFieldItem('Phone Number', 'text', true);
-        }
-        init();
-    </script>
 </body>
 </html>
