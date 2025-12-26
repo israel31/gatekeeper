@@ -75,7 +75,7 @@
                                     <span class="absolute left-4 top-3.5 text-slate-400">₦</span>
                                     <input type="number" id="price" required min="100" value="5000" class="input-primary pl-10" placeholder="5000">
                                 </div>
-                            </div>
+                                </div>
                         </div>
                     </div>
 
@@ -205,11 +205,32 @@
                 user_id: user.id, is_open: true
             };
             formData.requires_payment = requiresPaymentCheckbox.checked;
+            
+            // --- UPDATED PAYMENT LOGIC START ---
             if (formData.requires_payment) {
-                const priceNaira = parseFloat(document.getElementById('price').value);
-                formData.price = Math.round(priceNaira * 100);
+                const inputPrice = parseFloat(document.getElementById('price').value);
+                const passFees = document.getElementById('pass_fees').checked; // Check if checkbox exists and is checked
+                
+                // Recalculate fees based on the final input value to be safe
+                let paystackFee = inputPrice * 0.015;
+                if (inputPrice >= 2500) paystackFee += 100;
+                if (paystackFee > 2000) paystackFee = 2000;
+                
+                const platformFee = 10;
+                const totalFees = paystackFee + platformFee;
+
+                // Set Payload Values (Converted to Kobo)
+                formData.price = Math.round(inputPrice * 100); // Total amount registrant pays
+                formData.base_price = Math.round((inputPrice - totalFees) * 100); // Net amount you get
+                formData.platform_fee = Math.round(platformFee * 100); // 10 Naira in Kobo
+
                 if (formData.price < 100) throw new Error("Price must be at least ₦1 for payment.");
-            } else { formData.price = 0; }
+            } else { 
+                formData.price = 0; 
+                formData.base_price = 0;
+                formData.platform_fee = 0;
+            }
+            // --- UPDATED PAYMENT LOGIC END ---
 
             const customFields = []; let order = 0;
             fieldList.querySelectorAll('[data-key]').forEach(fieldItem => {
@@ -258,10 +279,73 @@
             user = await requireAuth(); if (!user) return;
             createPreviewField('Full Name', 'text'); createPreviewField('Email Address', 'email');
             createFieldItem('Phone Number', 'text', true);
-        }
-        init();
-    </script>
-</body>
-</html>
 
-                                
+            // --- PAYSTACK FEE LOGIC INJECTION START ---
+            const priceInput = document.getElementById('price');
+            const paymentContainer = document.getElementById('payment-fields');
+            
+            // 1. Create the "Pass Fees" Checkbox
+            const feeToggleContainer = document.createElement('div');
+            feeToggleContainer.className = 'flex items-center justify-between pt-2';
+            feeToggleContainer.innerHTML = `
+                <label class="text-sm text-slate-600 cursor-pointer" for="pass_fees">
+                    Let registrant pay transaction charges
+                </label>
+                <input type="checkbox" id="pass_fees" class="w-4 h-4 rounded text-[#0a2540] focus:ring-[#0a2540] cursor-pointer">
+            `;
+            paymentContainer.appendChild(feeToggleContainer);
+
+            // 2. Create the "You Receive" Live Text
+            const receiveText = document.createElement('p');
+            receiveText.id = 'receive-preview';
+            receiveText.className = 'text-xs font-bold text-emerald-600 mt-2 text-right';
+            receiveText.innerText = 'You receive: ₦5,000'; // Default
+            priceInput.parentElement.parentElement.appendChild(receiveText);
+
+            // 3. Logic & Event Listeners
+            const PASS_FEES_CHECKBOX = document.getElementById('pass_fees');
+            let lastEnteredBase = 5000;
+
+            function calculateFees(amount) {
+                // Paystack: 1.5% + 100 (if >= 2500), Cap 2000
+                let paystackFee = amount * 0.015;
+                if (amount >= 2500) paystackFee += 100;
+                if (paystackFee > 2000) paystackFee = 2000;
+                
+                return {
+                    paystack: paystackFee,
+                    platform: 10,
+                    total_fees: paystackFee + 10
+                };
+            }
+
+            function calculateGrossFromNet(targetNet) {
+                // Estimate Gross (Try without flat fee first)
+                let gross = (targetNet + 10) / 0.985;
+                
+                // Check if result hits threshold for N100 flat fee
+                if (gross >= 2500) {
+                    gross = (targetNet + 10 + 100) / 0.985;
+                }
+
+                // Check Cap (Paystack max 2000)
+                const estimatedFee = (gross * 0.015) + (gross >= 2500 ? 100 : 0);
+                if (estimatedFee > 2000) {
+                    gross = targetNet + 2000 + 10;
+                }
+
+                return Math.ceil(gross);
+            }
+
+            function updateDisplay() {
+                const currentVal = parseFloat(priceInput.value) || 0;
+                const isPassing = PASS_FEES_CHECKBOX.checked;
+                let netAmount = 0;
+
+                if (isPassing) {
+                    // Logic: Input is Gross. Net = Gross - Fees
+                    const fees = calculateFees(currentVal);
+                    netAmount = currentVal - fees.total_fees;
+                } else {
+                    // Logic: Input is Base/Gross. Net = Gross - Fees
+                    con
