@@ -98,10 +98,23 @@
                 </div>
 
                 <div class="md:hidden flex items-center">
-                    <button class="text-slate-300 hover:text-white focus:outline-none">
+                    <button id="mobile-menu-btn" class="text-slate-300 hover:text-white focus:outline-none">
                         <i data-lucide="menu" class="w-6 h-6"></i>
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-[#0f172a] border-t border-slate-800 absolute w-full left-0 top-20 shadow-xl">
+            <div class="px-4 py-6 space-y-4 flex flex-col">
+                <a href="#features" class="block text-base font-medium text-slate-300 hover:text-white transition">Features</a>
+                <a href="#how-it-works" class="block text-base font-medium text-slate-300 hover:text-white transition">How it Works</a>
+                <a href="#pricing" class="block text-base font-medium text-slate-300 hover:text-white transition">Pricing</a>
+                <div class="h-px w-full bg-slate-800 my-2"></div>
+                <a href="/admin-login.html" class="block text-base font-medium text-white hover:text-emerald-400 transition">Log In</a>
+                <a href="/admin-login.html" class="block w-full text-center py-3 rounded-xl text-base font-bold text-[#0a2540] bg-white hover:bg-emerald-50 transition">
+                    Get Started
+                </a>
             </div>
         </div>
     </nav>
@@ -399,6 +412,23 @@
         }, { threshold: 0.1 });
 
         document.querySelectorAll('.fade-in-up').forEach((el) => observer.observe(el));
+
+        // Mobile Menu Logic
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if(mobileBtn && mobileMenu){
+            mobileBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // Optional: Close menu when a link is clicked
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                });
+            });
+        }
     </script>
 </body>
 </html>
